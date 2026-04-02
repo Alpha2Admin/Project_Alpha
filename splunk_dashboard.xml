@@ -1,0 +1,213 @@
+<dashboard version="1.1" theme="dark">
+  <label>🛡️ CASB Security Gateway — SOC Dashboard</label>
+  <description>Real-time AI Security Monitoring — DLP Alerts, Inference Telemetry, Model Usage</description>
+
+  <!-- ═══ ROW 1: Key Metrics ═══ -->
+  <row>
+    <panel>
+      <single>
+        <title>🚨 DLP Blocks (24h)</title>
+        <search>
+          <query>index=casb_gateway action="dlp_block" earliest=-24h | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x22c55e","0xf97316","0xef4444"]</option>
+        <option name="rangeValues">[0,5]</option>
+        <option name="useColors">1</option>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>✅ Successful Inferences (24h)</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference" earliest=-24h | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x6366f1","0x22c55e"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>❌ Failed Inferences (24h)</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference_failure" earliest=-24h | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x22c55e","0xeab308","0xef4444"]</option>
+        <option name="rangeValues">[0,3]</option>
+        <option name="useColors">1</option>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>🔥 Total Tokens Used (24h)</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference" earliest=-24h | stats sum(total_tokens) as total_tokens</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x6366f1","0xf97316"]</option>
+        <option name="rangeValues">[10000]</option>
+        <option name="useColors">1</option>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- ═══ ROW 2: Event Timeline ═══ -->
+  <row>
+    <panel>
+      <chart>
+        <title>📈 Activity Timeline — All Events</title>
+        <search>
+          <query>index=casb_gateway earliest=-24h
+| timechart span=10m count by action</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.fieldColors">{"dlp_block":"#ef4444","ai_inference":"#22c55e","ai_inference_failure":"#f97316"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- ═══ ROW 3: DLP Blocks Breakdown + Model Usage ═══ -->
+  <row>
+    <panel>
+      <chart>
+        <title>🚫 DLP Blocks by Rule</title>
+        <search>
+          <query>index=casb_gateway action="dlp_block" earliest=-24h
+| stats count by rule
+| sort -count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.showPercent">1</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>🤖 Model Usage Distribution</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference" earliest=-24h
+| stats count by model
+| sort -count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.showPercent">1</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>⚡ DLP Blocks by Severity</title>
+        <search>
+          <query>index=casb_gateway action="dlp_block" earliest=-24h
+| stats count by severity
+| sort -count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.fieldColors">{"critical":"#ef4444","high":"#f97316","medium":"#eab308","low":"#22c55e"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- ═══ ROW 4: Performance Metrics ═══ -->
+  <row>
+    <panel>
+      <chart>
+        <title>⏱️ Inference Latency Over Time (ms)</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference" earliest=-24h
+| timechart span=10m avg(duration_ms) as avg_latency max(duration_ms) as max_latency</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>📊 Tokens Per Request (avg by model)</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference" earliest=-24h
+| stats avg(total_tokens) as avg_tokens count by model
+| sort -count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- ═══ ROW 5: Recent DLP Alerts Table ═══ -->
+  <row>
+    <panel>
+      <table>
+        <title>🚨 Recent DLP Block Alerts</title>
+        <search>
+          <query>index=casb_gateway action="dlp_block" earliest=-24h
+| table _time rule severity user
+| sort -_time
+| head 50
+| rename _time as "Timestamp" rule as "Violated Rule" severity as "Severity" user as "User Context"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ═══ ROW 6: Recent Inference Log ═══ -->
+  <row>
+    <panel>
+      <table>
+        <title>📋 Recent AI Inference Log</title>
+        <search>
+          <query>index=casb_gateway action="ai_inference" earliest=-24h
+| table _time model total_tokens duration_ms prompt_preview
+| sort -_time
+| head 30
+| rename _time as "Timestamp" model as "Model" total_tokens as "Tokens" duration_ms as "Latency (ms)" prompt_preview as "Prompt Preview"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">10</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+</dashboard>
