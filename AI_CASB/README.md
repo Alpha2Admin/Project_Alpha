@@ -1,4 +1,4 @@
-# 🛡️ AI-CASB: Agentic AI Security Gateway
+# 🛡️ AI-CASB: Agentic AI Security Gateway (v4.0)
 
 > **The security layer your AI coding agents don't know exists.**
 
@@ -126,18 +126,27 @@ Deterministic, auditable, and zero-latency. Every rule is scoped to either `ingr
 ### 🍯 Layer 3 — Canary Token Honeypot
 A secret token (`sk-casb-canary-XXXX`) is injected into the model's system prompt. If an attacker tricks the AI into repeating it, the egress filter catches it and raises a `CRITICAL` alert in Splunk before the response reaches the user.
 
-### 📊 Splunk SOC Dashboard
-- **5-second auto-refresh** for real-time incident response
-- **Global time picker** — filter from last 15 minutes to all time
-- Per-block layer identification (`L1_Entropy`, `L1.5_Semantic`, `L2_DLP`, `L3_Egress`)
-- Clean **prompt preview** — shows the user's actual typed message, not agentic system context
 - Human-readable timestamps
 
-### 🎛️ Interactive Rule Dashboard
-- Web UI at `localhost:5001`
-- **Full CRUD** — Create, Read, Update, Delete DLP rules in real time
-- Built-in regex tester
-- Zero-downtime updates
+### 🧠 Layer 4 — ML Trainer & DeBERTa Fine-Tuning (NEW in v4.0)
+The ultimate defense against evolving threats. Collect prompts that were missed or falsely flagged directly in the dashboard and export them as a training dataset. Run the provided fine-tuning pipeline to create a "New Brain" for your gateway tailored to your specific organizational threats.
+
+- **Non-generative security** — immune to jailbreaks
+- **Continuous improvement** — the more you use it, the harder it is to hack
+- **Zero-downtime deployment** — restart the gateway to load the new boosted model
+
+### 🚫 Phrase Blocklist — Auto-Rule Generator (NEW in v4.0)
+Instantly block specific malicious phrases or jailbreak templates. Paste a list of phrases, and the engine auto-escapes them into safe regex patterns and creates hot-reloadable DLP rules.
+
+- **Bulk creation** — add dozens of banned phrases in seconds
+- **Hot-reload** — active immediately without resetting sessions
+- **Case-insensitive & Word-boundary options**
+
+### 🎛️ Interactive Dashboard (v4.0)
+- **DLP Management** — Full CRUD for standard rules
+- **Phrase Blocklist Tab** — Bulk policy creation
+- **ML Trainer Tab** — Dataset collection for model fine-tuning
+- **Dark cybersecurity theme** with real-time stats
 
 ---
 
