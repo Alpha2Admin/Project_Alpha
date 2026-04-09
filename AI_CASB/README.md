@@ -87,6 +87,13 @@ Traditional CASB, DLP, and WAF tools were not designed for this. **AI-CASB was.*
 
 ## ✨ Features
 
+### 🔢 Layer 1 — Shannon Entropy Analysis
+The first and fastest gate. Every prompt chunk is scored for statistical randomness. A Base64-encoded payload has a characteristic entropy signature (~5.5 bits/char) that is mathematically distinguishable from natural language (~3.5 bits/char). This layer costs zero ML compute and runs in under 1ms.
+
+- Blocks Base64-encoded injection attempts
+- Blocks Hex-encoded payloads
+- Blocks dense Leetspeak obfuscation
+
 ### 🧠 Layer 1.5 — Semantic Prompt Injection Classifier (NEW in v3.0)
 The signature feature of this release. Unlike regex rules that only match known patterns, the DeBERTa classifier understands **intent**. It catches attacks that are deliberately worded to avoid keyword detection:
 
@@ -98,13 +105,6 @@ No regex rule would catch this. The classifier scores it at **1.0 injection conf
 - **Type:** Binary classifier — not a generative model → **cannot be prompted, reasoned with, or jailbroken**
 - **Latency:** ~90ms on CPU — no GPU required
 - **Only classifies user messages** — Cline/Continue system prompts are excluded to prevent false positives
-
-### 🔢 Layer 1 — Shannon Entropy Analysis
-Every prompt chunk is scored for statistical randomness. A Base64-encoded payload has a characteristic entropy signature (~5.5 bits/char) that is mathematically distinguishable from natural language (~3.5 bits/char). This layer costs zero ML compute.
-
-- Blocks Base64-encoded injection attempts
-- Blocks Hex-encoded payloads
-- Blocks dense Leetspeak obfuscation
 
 ### 📋 Layer 2 — Hot-Reloadable Regex DLP Engine
 Deterministic, auditable, and zero-latency. Every rule is scoped to either `ingress` (prompt scanning), `egress` (response scanning), or `both`.
