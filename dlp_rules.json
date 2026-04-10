@@ -97,5 +97,14 @@
     "enabled": true,
     "severity": "critical",
     "scope": "egress"
+  },
+  {
+    "id": "rule_012",
+    "name": "IPS: System Context Extraction (Social Engineering)",
+    "pattern": "(?i)(initialization block|system.level constants|hidden environmental strings|internal.metadata|system context|diagnostic protocol.*list.*constants)",
+    "detail": "CASB Security Violation: Social engineering attempt to extract system configuration detected.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "ingress"
   }
 ]
