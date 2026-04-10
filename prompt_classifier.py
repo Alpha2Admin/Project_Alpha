@@ -1,15 +1,21 @@
 """
-AI-CASB v3.0 — Semantic Prompt Injection Classifier
+AI-CASB v4.0 — Semantic Prompt Injection Classifier
 ====================================================
 
-Uses ProtectAI's DeBERTa-v3-base model (86M params, ~350MB) as a deterministic
-binary classifier for prompt injection detection.
+Uses ProtectAI's DeBERTa-v3-base model as a deterministic binary classifier
+for prompt injection detection.
 
 This module is NOT a generative model — it cannot be socially engineered.
 It performs a single mathematical forward pass and outputs a probability
 score between 0.0 (safe) and 1.0 (injection). That's it.
 
-Model: protectai/deberta-v3-base-prompt-injection-v2
+Model priority:
+  1. ./models/casb-finetuned/   ← your org-specific fine-tuned model (if present)
+  2. protectai/deberta-v3-base-prompt-injection-v2  ← base model (HuggingFace cache)
+
+To fine-tune: python finetune_classifier.py --data training_data/my_samples.jsonl
+
+Base model: protectai/deberta-v3-base-prompt-injection-v2
 License: Apache 2.0
 """
 
@@ -19,9 +25,10 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # ── Configuration ────────────────────────────────────────────────────────────
-MODEL_NAME = "protectai/deberta-v3-base-prompt-injection-v2"
+BASE_MODEL_NAME    = "protectai/deberta-v3-base-prompt-injection-v2"
+FINETUNED_MODEL    = "./models/casb-finetuned"   # Auto-loaded if it exists
 INJECTION_THRESHOLD = 0.85  # Block if injection confidence > 85%
-MAX_INPUT_LENGTH = 512      # DeBERTa max token window
+MAX_INPUT_LENGTH   = 512       # DeBERTa max token window
 
 # ── Singleton Loader ─────────────────────────────────────────────────────────
 _tokenizer = None
@@ -33,24 +40,35 @@ _loaded = False
 def _load_model():
     """
     Lazily load the model into memory on first use.
-    Runs on CPU by default — at 86M params this classifies in <15ms on CPU.
+    Prefers a locally fine-tuned model if one exists at FINETUNED_MODEL path.
+    Falls back to the base ProtectAI model from HuggingFace cache.
     """
     global _tokenizer, _model, _device, _loaded
 
     if _loaded:
         return
 
-    print("🧠 [CASB L1.5] Loading semantic classifier: protectai/deberta-v3-base-prompt-injection-v2...")
-    start = time.time()
+    import os
+    # Auto-detect fine-tuned model
+    model_source = FINETUNED_MODEL if os.path.isdir(FINETUNED_MODEL) else BASE_MODEL_NAME
+    is_finetuned = model_source == FINETUNED_MODEL
 
-    _device = torch.device("cpu")  # CPU is faster for single-inference on small models
-    _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    _model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+    if is_finetuned:
+        print(f"🧬 [CASB L1.5] Fine-tuned model detected — loading from {FINETUNED_MODEL}")
+    else:
+        print(f"🧠 [CASB L1.5] Loading base classifier: {BASE_MODEL_NAME}")
+
+    start = time.time()
+    _device = torch.device("cpu")  # CPU is fast enough for single-inference on this model size
+    _tokenizer = AutoTokenizer.from_pretrained(model_source)
+    _model = AutoModelForSequenceClassification.from_pretrained(model_source)
     _model.to(_device)
     _model.eval()  # Lock into inference mode (no gradient computation)
 
     elapsed = round(time.time() - start, 2)
-    print(f"✅ [CASB L1.5] Semantic classifier loaded in {elapsed}s — {sum(p.numel() for p in _model.parameters()) / 1e6:.1f}M params")
+    param_m  = sum(p.numel() for p in _model.parameters()) / 1e6
+    tag = "[fine-tuned]" if is_finetuned else "[base]"
+    print(f"✅ [CASB L1.5] Classifier loaded {tag} in {elapsed}s — {param_m:.1f}M params")
     _loaded = True
 
 
