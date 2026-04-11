@@ -2,7 +2,7 @@
 
 > **The security layer your AI coding agents don't know exists.**
 
-As AI coding agents like **Cline**, **Continue**, **GitHub Copilot**, and **Cursor** become the default interface for software development, they introduce a new and largely unaddressed attack surface: **the prompt channel**. Developers now write code by having conversations with AI — and every one of those conversations is a potential vector for:
+As AI coding agents like **Cline**, **Continue**, and **Cursor** become the default interface for software development, they introduce a new and largely unaddressed attack surface: **the prompt channel**. Developers now write code by having conversations with AI — and every one of those conversations is a potential vector for:
 
 - **Prompt Injection** — malicious instructions embedded in code, files, or user input that hijack your AI agent's behaviour
 - **Data Exfiltration** — sensitive credentials, PII, or proprietary code leaking into model context
@@ -34,7 +34,7 @@ Traditional CASB, DLP, and WAF tools were not designed for this. **AI-CASB was.*
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                                                      │
-│    🤖 AI Coding Agents (Cline / Continue / Cursor / Copilot)        │
+│    🤖 AI Coding Agents (Cline / Continue / Cursor)                  │
 │                                                                      │
 └──────────────────────────────┬───────────────────────────────────────┘
                                │ Every prompt, every time
@@ -146,7 +146,7 @@ Instantly block specific malicious phrases or jailbreak templates. Paste a list 
 - **Case-insensitive & Word-boundary options**
 
 ### 🌍 Universal API Integration (100+ Providers)
-Because the CASB core is powered by LiteLLM, it acts as a universal translator. To your IDE (Continue, Cline, Copilot), the CASB simply pretends to be a standard OpenAI proxy. Behind the scenes, the gateway can seamlessly route securely to:
+Because the CASB core is powered by LiteLLM, it acts as a universal translator. To your IDE (Continue, Cline, Cursor), the CASB simply pretends to be a standard OpenAI proxy. Behind the scenes, the gateway can seamlessly route securely to:
 - **Cloud Providers:** OpenRouter, Anthropic, OpenAI, Google Gemini API, Groq.
 - **Enterprise Cloud:** AWS Bedrock, Azure OpenAI, Google Vertex AI.
 - **Local Providers:** Ollama, LM Studio, vLLM.
