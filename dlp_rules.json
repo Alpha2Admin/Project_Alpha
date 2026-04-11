@@ -1,0 +1,101 @@
+[
+  {
+    "id": "rule_001",
+    "name": "Internal IPv4 Address",
+    "pattern": "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b",
+    "detail": "CASB Policy Violation: IP Addresses are not permitted in prompts.",
+    "enabled": true,
+    "severity": "high",
+    "scope": "both"
+  },
+  {
+    "id": "rule_002",
+    "name": "Hardcoded Credential",
+    "pattern": "(?i)(password|secret|api_key|token)\\s*=\\s*[\"'][a-zA-Z0-9\\-_]{10,}[\"']",
+    "detail": "CASB Policy Violation: Hardcoded credentials are not permitted in prompts.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "both"
+  },
+  {
+    "id": "rule_003",
+    "name": "Credit Card Number",
+    "pattern": "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\\b",
+    "detail": "CASB Policy Violation: Credit card numbers are not permitted in prompts.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "both"
+  },
+  {
+    "id": "rule_004",
+    "name": "AWS Access Key",
+    "pattern": "(?i)(AKIA|ASIA|AROA)[A-Z0-9]{16}",
+    "detail": "CASB Policy Violation: AWS access keys are not permitted in prompts.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "both"
+  },
+  {
+    "id": "rule_005",
+    "name": "Private Key Block",
+    "pattern": "-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----",
+    "detail": "CASB Policy Violation: Private keys are not permitted in prompts.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "both"
+  },
+  {
+    "id": "rule_006",
+    "name": "Email Address (PII)",
+    "pattern": "\\b[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Z|a-z]{2,}\\b",
+    "detail": "CASB Policy Violation: Email addresses (PII) are not permitted in prompts.",
+    "enabled": true,
+    "severity": "medium",
+    "scope": "both"
+  },
+  {
+    "id": "rule_007",
+    "name": "Social Security Number",
+    "pattern": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+    "detail": "CASB Policy Violation: Social Security Numbers are not permitted in prompts.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "both"
+  },
+  {
+    "id": "rule_008",
+    "name": "IPS: Command Override Injection",
+    "pattern": "(?i)(ignore( all)? previous( instructions| commands| prompts))",
+    "detail": "CASB Security Violation: Prompt injection attempting to override system instructions detected.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "ingress"
+  },
+  {
+    "id": "rule_009",
+    "name": "IPS: System Prompt Theft",
+    "pattern": "(?i)(reveal|what is|print|repeat)\\s+(your\\s+)?(system prompt|system message|initial prompt|core instructions)",
+    "detail": "CASB Security Violation: Jailbreak attempting to extract core system instructions detected.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "ingress"
+  },
+  {
+    "id": "rule_010",
+    "name": "IPS: Persona Jailbreak (DAN)",
+    "pattern": "(?i)(act as an uncensored|you are now\\b|rule free|Do Anything Now|\\bDAN\\b|jailbreak mode)",
+    "detail": "CASB Security Violation: Persona manipulation and jailbreak keywords detected.",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "ingress"
+  },
+  {
+    "id": "rule_011",
+    "name": "Canary Token Exfiltration",
+    "pattern": "sk-casb-canary-9fa82b3c-DO-NOT-REVEAL",
+    "detail": "CASB CRITICAL: Honeypot canary token detected in response. System prompt was exfiltrated!",
+    "enabled": true,
+    "severity": "critical",
+    "scope": "egress"
+  }
+]

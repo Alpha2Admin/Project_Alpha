@@ -1,0 +1,29 @@
+# ── Environment ──────────────────────
+.env
+*.env
+
+# ── Python ───────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ── Logs ─────────────────────────────
+logs/
+*.log
+*.pid
+
+# ── IDE ──────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ───────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Splunk (local testing artifacts) ─
+*.csv
+\n# Local Credentials\nPORTAINER_CREDS.txt
