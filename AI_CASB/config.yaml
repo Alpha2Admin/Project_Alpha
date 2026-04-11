@@ -23,12 +23,6 @@ model_list:
       model: "ollama/*"
       api_base: "http://localhost:11434"
 
-  # ── Wildcard: route openrouter/* requests to OpenRouter ─────────────
-  - model_name: "openrouter/*"
-    litellm_params:
-      model: "openrouter/*"
-      api_key: "os.environ/OPENROUTER_API_KEY"
-
   # ── Wildcard: route any unmapped request to LM Studio ─────────────
   - model_name: "*"
     litellm_params:
