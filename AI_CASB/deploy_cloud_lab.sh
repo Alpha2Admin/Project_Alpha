@@ -286,7 +286,7 @@ from fastapi import HTTPException
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SPLUNK_HEC_URL = "https://localhost:8088/services/collector/event"
-SPLUNK_HEC_TOKEN = os.getenv("SPLUNK_HEC_TOKEN", "YOUR_TOKEN_HERE")
+SPLUNK_HEC_TOKEN = os.getenv("SPLUNK_HEC_TOKEN", "")
 
 # --- DLP Policy Rules ---
 DLP_RULES = [
