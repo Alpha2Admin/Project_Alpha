@@ -324,19 +324,6 @@ Removes: Splunk container, Python venv, and generated configs.
 
 ---
 
-## 🗺️ Roadmap
-
-- [x] Shannon Entropy layer
-- [x] DeBERTa semantic classifier
-- [x] Phrase Blocklist auto-rule generator
-- [x] ML Trainer + DeBERTa fine-tuning pipeline
-- [ ] ONNX runtime export for DeBERTa (sub-10ms inference)
-- [ ] OpenTelemetry integration alongside Splunk
-- [ ] Multi-agent session correlation (track agent chains across requests)
-- [ ] Kubernetes sidecar deployment mode
-
----
-
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
