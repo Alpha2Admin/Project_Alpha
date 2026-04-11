@@ -37,6 +37,23 @@ cd "$SCRIPT_DIR"
 set -a; source .env; set +a
 log "Environment loaded"
 
+# ── Swap Continue config to CASB-secured mode ─────────────────────────────
+CONTINUE_CFG="$HOME/.continue/config.yaml"
+CONTINUE_BACKUP="$SCRIPT_DIR/backups/continue_normal_config.yaml"
+CASB_CFG="$SCRIPT_DIR/backups/continue_casb_config.yaml"
+
+if [[ -f "$CASB_CFG" ]]; then
+  # Back up the current (normal) config if it's not already a CASB config
+  if ! grep -q "CASB" "$CONTINUE_CFG" 2>/dev/null; then
+    cp "$CONTINUE_CFG" "$CONTINUE_BACKUP" 2>/dev/null && \
+      log "Continue normal config backed up"
+  fi
+  cp "$CASB_CFG" "$CONTINUE_CFG"
+  log "Continue config switched to CASB-secured mode"
+else
+  warn "No CASB Continue config found at $CASB_CFG — skipping swap"
+fi
+
 # Ensure Flask is installed
 "$VENV/pip" show flask &>/dev/null || {
   warn "Flask not found — installing..."
@@ -55,7 +72,7 @@ fi
 mkdir -p "$LOG_DIR"
 
 # ── Kill existing processes on our ports ──────────────────────────────────
-for port in 4000 5001; do
+for port in 4000 5001 8080; do
   pid=$(lsof -ti tcp:$port 2>/dev/null || true)
   if [[ -n "$pid" ]]; then
     warn "Port $port in use by PID $pid — stopping..."
@@ -79,20 +96,44 @@ else
   error "Dashboard failed to start. Check $LOG_DIR/dashboard.log"
 fi
 
+# ── Start Copilot Forward Proxy (port 8080) ───────────────────────────────
+log "Starting Copilot Mitmproxy on port 8080..."
+nohup "$VENV/mitmdump" -s "$SCRIPT_DIR/copilot_interceptor.py" --set block_global=false \
+  --set http2=false --ignore-hosts 'api\.github\.com' --ignore-hosts '.*\.(microsoft|azure)\.com' \
+  > "$LOG_DIR/mitmproxy.log" 2>&1 &
+MITMPROXY_PID=$!
+echo "$MITMPROXY_PID" > "$LOG_DIR/mitmproxy.pid"
+sleep 2
+
+CA_CERT_PATH="$HOME/.mitmproxy/mitmproxy-ca-cert.pem"
+if [[ -f "$CA_CERT_PATH" ]]; then
+  export NODE_EXTRA_CA_CERTS="$CA_CERT_PATH"
+  log "NODE_EXTRA_CA_CERTS exported for Copilot interception"
+else
+  warn "mitmproxy certificate not found, Copilot SSL inspection may fail."
+fi
+
 # ── Start LiteLLM Proxy (port 4000) ───────────────────────────────────────
 echo ""
 echo -e "${CYAN}=============================================${NC}"
-echo -e "${CYAN}  Launching LiteLLM Proxy (foreground)${NC}"
+echo -e "${CYAN}  Launching AI-CASB Security Gateway${NC}"
 echo -e "${CYAN}  Dashboard → http://localhost:5001${NC}"
-echo -e "${CYAN}  Proxy     → http://localhost:4000${NC}"
-echo -e "${CYAN}  Splunk    → http://localhost:8000${NC}"
+echo -e "${CYAN}  LiteLLM   → http://localhost:4000 (Reverse Proxy)${NC}"
+echo -e "${CYAN}  Copilot   → http://localhost:8080 (Forward Proxy)${NC}"
+echo -e "${CYAN}  CA Cert   → $CA_CERT_PATH${NC}"
 echo -e "${CYAN}  Press Ctrl+C to stop everything${NC}"
 echo -e "${CYAN}=============================================${NC}\n"
 
-# Trap Ctrl+C to clean up both processes
+# Trap Ctrl+C to clean up all processes
 cleanup() {
   echo -e "\n${YELLOW}[!] Shutting down CASB Gateway...${NC}"
   kill "$DASHBOARD_PID" 2>/dev/null && log "Dashboard stopped"
+  kill "$MITMPROXY_PID" 2>/dev/null && log "Copilot Mitmproxy stopped"
+  # Restore normal Continue config
+  if [[ -f "$CONTINUE_BACKUP" ]]; then
+    cp "$CONTINUE_BACKUP" "$CONTINUE_CFG"
+    log "Continue config restored to normal (direct) mode"
+  fi
   log "LiteLLM stopped"
   exit 0
 }
