@@ -37,6 +37,23 @@ cd "$SCRIPT_DIR"
 set -a; source .env; set +a
 log "Environment loaded"
 
+# ── Swap Continue config to CASB-secured mode ─────────────────────────────
+CONTINUE_CFG="$HOME/.continue/config.yaml"
+CONTINUE_BACKUP="$SCRIPT_DIR/backups/continue_normal_config.yaml"
+CASB_CFG="$SCRIPT_DIR/backups/continue_casb_config.yaml"
+
+if [[ -f "$CASB_CFG" ]]; then
+  # Back up the current (normal) config if it's not already a CASB config
+  if ! grep -q "CASB" "$CONTINUE_CFG" 2>/dev/null; then
+    cp "$CONTINUE_CFG" "$CONTINUE_BACKUP" 2>/dev/null && \
+      log "Continue normal config backed up"
+  fi
+  cp "$CASB_CFG" "$CONTINUE_CFG"
+  log "Continue config switched to CASB-secured mode"
+else
+  warn "No CASB Continue config found at $CASB_CFG — skipping swap"
+fi
+
 # Ensure Flask is installed
 "$VENV/pip" show flask &>/dev/null || {
   warn "Flask not found — installing..."
@@ -93,6 +110,11 @@ echo -e "${CYAN}=============================================${NC}\n"
 cleanup() {
   echo -e "\n${YELLOW}[!] Shutting down CASB Gateway...${NC}"
   kill "$DASHBOARD_PID" 2>/dev/null && log "Dashboard stopped"
+  # Restore normal Continue config
+  if [[ -f "$CONTINUE_BACKUP" ]]; then
+    cp "$CONTINUE_BACKUP" "$CONTINUE_CFG"
+    log "Continue config restored to normal (direct) mode"
+  fi
   log "LiteLLM stopped"
   exit 0
 }

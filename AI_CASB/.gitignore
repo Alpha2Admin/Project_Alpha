@@ -26,18 +26,4 @@ Thumbs.db
 
 # ── Splunk (local testing artifacts) ─
 *.csv
-
-# ── Local Credentials ─────────────────
-PORTAINER_CREDS.txt
-
-# ── ML / Fine-tuning ─────────────────
-# Model weights are too large for Git (use Git LFS or HuggingFace Hub instead)
-models/
-*.bin
-*.safetensors
-*.pt
-*.ckpt
-
-# Exported runtime training data (personal examples — do not commit)
-training_data/dashboard_export_*.jsonl
-training_data/my_samples.jsonl
+\n# Local Credentials\nPORTAINER_CREDS.txt
