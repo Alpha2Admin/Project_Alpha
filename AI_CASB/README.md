@@ -109,7 +109,7 @@ Deterministic, auditable, and zero-latency. Every rule is scoped to either `ingr
 
 **Hot-reload:** Edit `dlp_rules.json` or use the dashboard → changes apply instantly, zero restart.
 
-### ✂️ Layer 3 — Surgical Redaction Mode *(New in v5.0)*
+### ✂️ Layer 3 — Surgical Redaction Mode
 Instead of hard-blocking responses that contain secrets (which breaks developer workflow), the CASB now performs **surgical redaction**:
 
 1. Copilot's response streams to the CASB and is fully buffered
@@ -132,7 +132,7 @@ A secret token (`sk-casb-canary-XXXX`) is injected into the model's system promp
 - Triggers `CRITICAL` severity event in Splunk on exfiltration attempt
 - The canary is never visible to the user or the AI agent
 
-### 🤖 Native GitHub Copilot Interception *(New in v5.0)*
+### 🤖 Native GitHub Copilot Interception
 The forward proxy mode (`copilot_interceptor.py`) adds full DLP coverage for **native GitHub Copilot** — without requiring any GitHub/Microsoft account changes or VS Code extension modifications.
 
 **How it works:**
