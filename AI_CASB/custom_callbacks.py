@@ -12,13 +12,15 @@ from prompt_classifier import classify_prompt, warmup as warmup_classifier
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SPLUNK_HEC_URL = "https://localhost:8088/services/collector/event"
-SPLUNK_HEC_TOKEN = os.getenv("SPLUNK_HEC_TOKEN", "YOUR_TOKEN_HERE")
+SPLUNK_HEC_TOKEN = os.getenv("SPLUNK_HEC_TOKEN")
+if not SPLUNK_HEC_TOKEN:
+    print("⚠️ [CASB] WARNING: SPLUNK_HEC_TOKEN not set. Telemetry will fail.")
 
 # ── Canary Token Honeypot ────────────────────────────────────────────────────
 # This fake secret is injected into the LLM system prompt via config.yaml.
 # If the model ever outputs this in a response, it means an attacker successfully
 # extracted the hidden system prompt. The gateway will immediately fire a CRITICAL alert.
-CANARY_TOKEN = "sk-casb-canary-9fa82b3c-DO-NOT-REVEAL"
+CANARY_TOKEN = os.getenv("CASB_CANARY_TOKEN", "sk-casb-fallback-canary-uuid-change-me")
 
 # ── Entropy Thresholds (Anti-Obfuscation / Anti-Base64) ──────────────────────
 # Natural English hovers around 3.5-4.2 entropy.
@@ -38,9 +40,12 @@ def load_dlp_rules():
         current_mtime = os.path.getmtime(RULES_FILE)
         if current_mtime != _rules_mtime:
             with open(RULES_FILE, "r") as f:
-                _rules_cache = json.load(f)
+                raw_rules = f.read()
+                # Dynamically inject the canary token into the rules so it's not hardcoded in the JSON file
+                raw_rules = raw_rules.replace("CASB_CANARY_TOKEN_PLACEHOLDER", CANARY_TOKEN)
+                _rules_cache = json.loads(raw_rules)
             _rules_mtime = current_mtime
-            print(f"🔄 [CASB] Reloaded {len(_rules_cache)} DLP rules from {RULES_FILE}")
+            print(f"🔄 [CASB] Reloaded {len(_rules_cache)} DLP rules from {RULES_FILE} (Canary Injection Active)")
     except Exception as e:
         print(f"❌ [CASB] Failed to load DLP rules: {e}")
     return _rules_cache
