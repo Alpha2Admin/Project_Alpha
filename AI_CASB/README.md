@@ -126,7 +126,9 @@ Deterministic, auditable, and zero-latency. Every rule is scoped to either `ingr
 ### 🍯 Layer 3 — Canary Token Honeypot
 A secret token (`sk-casb-canary-XXXX`) is injected into the model's system prompt. If an attacker tricks the AI into repeating it, the egress filter catches it and raises a `CRITICAL` alert in Splunk before the response reaches the user.
 
-- Human-readable timestamps
+- Injected automatically via `config.yaml` — no agent-side changes required
+- Triggers `CRITICAL` severity event in Splunk on exfiltration attempt
+- The canary is never visible to the user or the AI agent
 
 ### 🧠 Layer 4 — ML Trainer & DeBERTa Fine-Tuning (NEW in v4.0)
 The ultimate defense against evolving threats. Collect prompts that were missed or falsely flagged directly in the dashboard and export them as a training dataset. Run the provided fine-tuning pipeline to create a "New Brain" for your gateway tailored to your specific organizational threats.
@@ -274,16 +276,41 @@ AI_CASB/
 ├── .gitignore
 ├── config.yaml               # LiteLLM routing + canary token injection
 ├── custom_callbacks.py       # ⭐ Core 4-layer security pipeline
-├── prompt_classifier.py      # ⭐ DeBERTa semantic classifier module (v3.0)
+├── prompt_classifier.py      # ⭐ DeBERTa classifier — auto-loads fine-tuned model
+├── finetune_classifier.py    # 🆕 DeBERTa fine-tuning pipeline (v4.0)
 ├── dlp_rules.json            # 11 hot-reloadable DLP rules
 ├── dashboard/
-│   └── index.html            # Rule management UI
+│   └── index.html            # DLP Rules + Phrase Blocklist + ML Trainer tabs
 ├── dashboard_server.py       # Flask API (port 5001)
 ├── splunk_dashboard.xml      # Pre-built SOC dashboard
+├── training_data/
+│   └── starter_examples.jsonl # 🆕 20 labeled examples to bootstrap fine-tuning
+├── models/                   # Fine-tuned model saved here (git-ignored)
 ├── start_casb.sh             # One-command startup
 ├── deploy_cloud_lab.sh       # Full automated deployment
 └── teardown_cloud_lab.sh     # Clean teardown
 ```
+
+---
+
+## 🧠 ML Trainer — Continuous Improvement Workflow
+
+The gateway gets smarter over time through a simple 4-step loop:
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  1. COLLECT  →  Dashboard ML Trainer tab — paste missed/wrong prompts │
+│  2. LABEL    →  Click  🚨 INJECTION  or  ✅ SAFE                      │
+│  3. EXPORT   →  Click  ⬇️ Export JSONL Dataset  → downloads .jsonl    │
+│  4. TRAIN    →  Run:   ./venv/bin/python3 finetune_classifier.py \    │
+│                         --data training_data/my_samples.jsonl         │
+│                  Then:  ./start_casb.sh  (auto-loads new model)       │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+- The fine-tuned model is saved to `./models/casb-finetuned/`
+- On next startup, `prompt_classifier.py` auto-detects and loads it
+- To revert to the base model: `rm -rf models/casb-finetuned && ./start_casb.sh`
 
 ---
 
@@ -299,8 +326,11 @@ Removes: Splunk container, Python venv, and generated configs.
 
 ## 🗺️ Roadmap
 
+- [x] Shannon Entropy layer (v2.0)
+- [x] DeBERTa semantic classifier (v3.0)
+- [x] Phrase Blocklist auto-rule generator (v4.0)
+- [x] ML Trainer + DeBERTa fine-tuning pipeline (v4.0)
 - [ ] ONNX runtime export for DeBERTa (sub-10ms inference)
-- [ ] Fine-tuning pipeline for org-specific injection patterns
 - [ ] OpenTelemetry integration alongside Splunk
 - [ ] Multi-agent session correlation (track agent chains across requests)
 - [ ] Kubernetes sidecar deployment mode
