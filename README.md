@@ -200,6 +200,10 @@ Launches:
 - **CASB Dashboard** → `http://localhost:5001`
 - **Splunk SOC** → `http://localhost:8000`
 
+**🔄 Dynamic Config Backup:** 
+When `./start_casb.sh` is executed, it automatically intercepts your `~/.continue/config.yaml` file, backs up your direct connections, and slots in a CASB-secured proxy configuration pointing to `localhost:4000`. 
+When you hit `Ctrl+C` or run `./stop_casb.sh`, the system cleanly restores your original clean configuration. No manual YAML editing is required to jump in and out of the CASB lab!
+
 > On first request, the DeBERTa classifier (~700MB) downloads automatically from HuggingFace and caches locally. Subsequent starts load from cache in ~2 seconds.
 
 ### 5. Point Your AI Agent at the Gateway
@@ -252,13 +256,23 @@ curl -s http://localhost:4000/v1/chat/completions \
 # → 403: Semantic analysis detected a prompt injection attempt (confidence: 100%)
 ```
 
-### Layer 2 — DLP Regex
+### Layer 2 — DLP Regex (Ingress)
 ```bash
 curl -s http://localhost:4000/v1/chat/completions \
   -H "Authorization: Bearer YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"YOUR_MODEL","messages":[{"role":"user","content":"My AWS key is AKIA6PV7ABCDEFGH1234"}]}'
 # → 403: AWS Access Key detected
+```
+
+### Layer 3 — Egress DLP Filter
+To test Egress, ask the AI to generate sensitive data without putting the data in the prompt itself. The proxy intercepts the *response* before it reaches the IDE.
+```bash
+curl -s http://localhost:4000/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"YOUR_MODEL","messages":[{"role":"user","content":"Generate a fake 16-digit Visa credit card number."}]}'
+# → 403: CASB Egress Violation: AI response contained sensitive data (Credit Card Number). Response suppressed.
 ```
 
 ### Verify in Splunk
