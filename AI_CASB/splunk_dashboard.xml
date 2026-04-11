@@ -1,6 +1,16 @@
-<dashboard version="1.1" theme="dark">
+<dashboard version="1.1" theme="dark" refresh="5">
   <label>🛡️ CASB Security Gateway — SOC Dashboard</label>
   <description>Real-time AI Security Monitoring — DLP Alerts, Inference Telemetry, Model Usage</description>
+
+  <fieldset submitButton="false">
+    <input type="time" token="global_time">
+      <label>Time Range</label>
+      <default>
+        <earliest>-7d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
 
   <!-- ═══ ROW 1: Key Metrics ═══ -->
   <row>
@@ -8,9 +18,9 @@
       <single>
         <title>🚨 DLP Blocks (24h)</title>
         <search>
-          <query>index=casb_gateway action="dlp_block" earliest=-24h | stats count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>index=casb_gateway action="dlp_block" | stats count</query>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="colorBy">value</option>
         <option name="colorMode">block</option>
@@ -24,9 +34,9 @@
       <single>
         <title>✅ Successful Inferences (24h)</title>
         <search>
-          <query>index=casb_gateway action="ai_inference" earliest=-24h | stats count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>index=casb_gateway action="ai_inference" | stats count</query>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="colorBy">value</option>
         <option name="colorMode">block</option>
@@ -40,9 +50,9 @@
       <single>
         <title>❌ Failed Inferences (24h)</title>
         <search>
-          <query>index=casb_gateway action="ai_inference_failure" earliest=-24h | stats count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>index=casb_gateway action="ai_inference_failure" | stats count</query>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="colorBy">value</option>
         <option name="colorMode">block</option>
@@ -56,9 +66,9 @@
       <single>
         <title>🔥 Total Tokens Used (24h)</title>
         <search>
-          <query>index=casb_gateway action="ai_inference" earliest=-24h | stats sum(total_tokens) as total_tokens</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>index=casb_gateway action="ai_inference" | stats sum(total_tokens) as total_tokens</query>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="colorBy">value</option>
         <option name="colorMode">block</option>
@@ -76,10 +86,10 @@
       <chart>
         <title>📈 Activity Timeline — All Events</title>
         <search>
-          <query>index=casb_gateway earliest=-24h
+          <query>index=casb_gateway
 | timechart span=10m count by action</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="charting.chart">area</option>
         <option name="charting.chart.stackMode">stacked</option>
@@ -96,11 +106,11 @@
       <chart>
         <title>🚫 DLP Blocks by Rule</title>
         <search>
-          <query>index=casb_gateway action="dlp_block" earliest=-24h
+          <query>index=casb_gateway action="dlp_block"
 | stats count by rule
 | sort -count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.chart.showPercent">1</option>
@@ -110,11 +120,11 @@
       <chart>
         <title>🤖 Model Usage Distribution</title>
         <search>
-          <query>index=casb_gateway action="ai_inference" earliest=-24h
+          <query>index=casb_gateway action="ai_inference"
 | stats count by model
 | sort -count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.chart.showPercent">1</option>
@@ -124,11 +134,11 @@
       <chart>
         <title>⚡ DLP Blocks by Severity</title>
         <search>
-          <query>index=casb_gateway action="dlp_block" earliest=-24h
+          <query>index=casb_gateway action="dlp_block"
 | stats count by severity
 | sort -count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.fieldColors">{"critical":"#ef4444","high":"#f97316","medium":"#eab308","low":"#22c55e"}</option>
@@ -142,10 +152,10 @@
       <chart>
         <title>⏱️ Inference Latency Over Time (ms)</title>
         <search>
-          <query>index=casb_gateway action="ai_inference" earliest=-24h
+          <query>index=casb_gateway action="ai_inference"
 | timechart span=10m avg(duration_ms) as avg_latency max(duration_ms) as max_latency</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="charting.chart">line</option>
         <option name="charting.legend.placement">bottom</option>
@@ -156,11 +166,11 @@
       <chart>
         <title>📊 Tokens Per Request (avg by model)</title>
         <search>
-          <query>index=casb_gateway action="ai_inference" earliest=-24h
+          <query>index=casb_gateway action="ai_inference"
 | stats avg(total_tokens) as avg_tokens count by model
 | sort -count</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.legend.placement">bottom</option>
@@ -174,13 +184,14 @@
       <table>
         <title>🚨 Recent DLP Block Alerts</title>
         <search>
-          <query>index=casb_gateway action="dlp_block" earliest=-24h
-| table _time rule severity user
-| sort -_time
+          <query>index=casb_gateway action="dlp_block"
+| eval FormattedTime=strftime(_time, "%Y-%m-%d %H:%M:%S")
+| table FormattedTime rule severity prompt_preview
+| sort -FormattedTime
 | head 50
-| rename _time as "Timestamp" rule as "Violated Rule" severity as "Severity" user as "User Context"</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+| rename FormattedTime as "Timestamp" rule as "Violated Policy" severity as "Severity" prompt_preview as "Intercepted Prompt Payload"</query>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="drilldown">none</option>
         <option name="count">20</option>
@@ -195,13 +206,14 @@
       <table>
         <title>📋 Recent AI Inference Log</title>
         <search>
-          <query>index=casb_gateway action="ai_inference" earliest=-24h
-| table _time model total_tokens duration_ms prompt_preview
-| sort -_time
+          <query>index=casb_gateway action="ai_inference"
+| eval FormattedTime=strftime(_time, "%Y-%m-%d %H:%M:%S")
+| table FormattedTime model total_tokens duration_ms prompt_preview
+| sort -FormattedTime
 | head 30
-| rename _time as "Timestamp" model as "Model" total_tokens as "Tokens" duration_ms as "Latency (ms)" prompt_preview as "Prompt Preview"</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+| rename FormattedTime as "Timestamp" model as "Model" total_tokens as "Tokens" duration_ms as "Latency (ms)" prompt_preview as "Prompt Preview"</query>
+          <earliest>$global_time.earliest$</earliest>
+          <latest>$global_time.latest$</latest>
         </search>
         <option name="drilldown">none</option>
         <option name="count">10</option>
