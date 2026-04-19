@@ -1,0 +1,37 @@
+model_list:
+  # ── Local Models (LM Studio on port 1234) ──────────────────────
+  # Add your LM Studio models here. The model name must match what
+  # LM Studio reports at http://localhost:1234/v1/models
+  #
+  # Example:
+  # - model_name: "liquid/lfm2.5-1.2b"
+  #   litellm_params:
+  #     model: "openai/liquid/lfm2.5-1.2b"
+  #     api_base: "http://localhost:1234/v1"
+  #     api_key: "not-needed"
+
+  # ── Local Models (Ollama on port 11434) ─────────────────────────
+  # Example:
+  # - model_name: "llama3.1:8b"
+  #   litellm_params:
+  #     model: "ollama/llama3.1:8b"
+  #     api_base: "http://localhost:11434"
+
+  # ── Wildcard: route any model request to LM Studio ─────────────
+  - model_name: "*"
+    litellm_params:
+      model: "openai/*"
+      api_base: "http://localhost:1234/v1"
+      api_key: "not-needed"
+
+litellm_settings:
+  master_key: "os.environ/LITELLM_MASTER_KEY"
+  callbacks: ["custom_callbacks.proxy_handler_instance"]
+  request_timeout: 60
+  drop_params: true
+  disable_spend_logs: true
+  store_model_in_db: false
+
+general_settings:
+  max_input_tokens: 8000
+  store_model_in_db: false

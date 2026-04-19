@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASB Security Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:#6366f1;color:#fff}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:#0a0e1a}
+::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px}
+:root{--critical:#ef4444;--high:#f97316;--medium:#eab308;--low:#22c55e;--primary:#6366f1;--primary-h:#818cf8;--bg:#0a0e1a;--card:#111827;--cb:rgba(255,255,255,0.08);--cbh:rgba(255,255,255,0.15);--text:#e2e8f0;--tm:#94a3b8;--td:#64748b}
+.error-banner{display:none;background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:12px 24px;text-align:center;font-size:.9rem;font-weight:500}
+.error-banner.visible{display:block}
+.header{position:relative;overflow:hidden;padding:32px 40px 28px;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);border-bottom:1px solid var(--cb)}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#a855f7,#ec4899,#6366f1);background-size:300% 100%;animation:hp 4s ease-in-out infinite}
+@keyframes hp{0%,100%{background-position:0% 50%;opacity:1}50%{background-position:100% 50%;opacity:.7}}
+.header-content{max-width:1400px;margin:0 auto}
+.header h1{font-size:1.75rem;font-weight:800;color:#fff}
+.header h1 span{margin-right:10px}
+.header .subtitle{font-size:.9rem;color:var(--tm);margin-top:4px}
+.header .last-updated{font-size:.75rem;color:var(--td);margin-top:8px}
+.container{max-width:1400px;margin:0 auto;padding:24px 40px 60px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--cb);border-radius:12px;padding:20px 24px;transition:all .25s;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card:nth-child(1)::after{background:var(--primary)}
+.stat-card:nth-child(2)::after{background:var(--low)}
+.stat-card:nth-child(3)::after{background:var(--td)}
+.stat-card:nth-child(4)::after{background:var(--critical)}
+.stat-card:hover{border-color:var(--cbh);transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,.3)}
+.stat-label{font-size:.78rem;color:var(--td);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:8px}
+.stat-value{font-size:2rem;font-weight:800;line-height:1}
+.stat-card:nth-child(1) .stat-value{color:var(--primary)}
+.stat-card:nth-child(2) .stat-value{color:var(--low)}
+.stat-card:nth-child(3) .stat-value{color:var(--td)}
+.stat-card:nth-child(4) .stat-value{color:var(--critical)}
+.action-bar{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-h);transform:translateY(-1px);box-shadow:0 4px 15px rgba(99,102,241,.4)}
+.btn-blue{background:#3b82f6;color:#fff}
+.btn-blue:hover{background:#60a5fa;box-shadow:0 4px 12px rgba(59,130,246,.35)}
+.btn-yellow{background:#ca8a04;color:#fff}
+.btn-yellow:hover{background:#eab308;box-shadow:0 4px 12px rgba(234,179,8,.35)}
+.btn-danger{background:var(--critical);color:#fff}
+.btn-danger:hover{background:#f87171;box-shadow:0 4px 12px rgba(239,68,68,.35)}
+.btn-sm{padding:6px 14px;font-size:.78rem;border-radius:6px}
+.search-box{flex:1;position:relative}
+.search-box input{width:100%;padding:10px 16px 10px 40px;background:var(--card);border:1px solid var(--cb);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s}
+.search-box input::placeholder{color:var(--td)}
+.search-box input:focus{border-color:var(--primary)}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--td);font-size:.9rem;pointer-events:none}
+.rules-list{display:flex;flex-direction:column;gap:12px}
+.rule-card{background:var(--card);border:1px solid var(--cb);border-radius:12px;padding:20px 24px;transition:all .25s}
+.rule-card:hover{border-color:var(--cbh);transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,.25)}
+.rule-card.disabled-rule{opacity:.55}
+.rule-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rule-header-left{display:flex;align-items:center;gap:12px}
+.rule-name{font-size:1.05rem;font-weight:700;color:#fff}
+.severity-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.severity-critical{background:rgba(239,68,68,.15);color:var(--critical);border:1px solid rgba(239,68,68,.3);box-shadow:0 0 12px rgba(239,68,68,.15)}
+.severity-high{background:rgba(249,115,22,.15);color:var(--high);border:1px solid rgba(249,115,22,.3);box-shadow:0 0 12px rgba(249,115,22,.15)}
+.severity-medium{background:rgba(234,179,8,.15);color:var(--medium);border:1px solid rgba(234,179,8,.3);box-shadow:0 0 12px rgba(234,179,8,.15)}
+.severity-low{background:rgba(34,197,94,.15);color:var(--low);border:1px solid rgba(34,197,94,.3);box-shadow:0 0 12px rgba(34,197,94,.15)}
+.toggle-wrapper{display:flex;align-items:center;gap:8px}
+.toggle-label{font-size:.75rem;color:var(--td);font-weight:500}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;inset:0;background:#374151;border-radius:24px;transition:all .3s}
+.toggle .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:all .3s}
+.toggle input:checked+.slider{background:var(--low);box-shadow:0 0 10px rgba(34,197,94,.3)}
+.toggle input:checked+.slider::before{transform:translateX(20px)}
+.rule-pattern{background:#0d1117;border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px 16px;margin-bottom:10px;overflow-x:auto}
+.rule-pattern code{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#7dd3fc;word-break:break-all;white-space:pre-wrap}
+.rule-detail{font-size:.82rem;color:var(--tm);margin-bottom:14px;line-height:1.5}
+.rule-actions{display:flex;gap:8px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex;animation:fi .2s ease}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.modal{background:#1a1f2e;border:1px solid var(--cb);border-radius:16px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;animation:si .3s ease;box-shadow:0 25px 60px rgba(0,0,0,.5)}
+@keyframes si{from{transform:translateY(30px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--cb)}
+.modal-header h2{font-size:1.15rem;font-weight:700;color:#fff}
+.modal-close{background:none;border:none;color:var(--td);font-size:1.4rem;cursor:pointer;padding:4px;line-height:1;transition:color .2s}
+.modal-close:hover{color:#fff}
+.modal-body{padding:24px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:.8rem;font-weight:600;color:var(--tm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;background:var(--card);border:1px solid var(--cb);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary)}
+.form-group textarea{resize:vertical;min-height:70px}
+.mono-input{font-family:'JetBrains Mono',monospace!important;font-size:.82rem!important}
+.form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.form-group select option{background:var(--card);color:var(--text)}
+.test-section{background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);border-radius:10px;padding:16px;margin-bottom:18px}
+.test-section h3{font-size:.82rem;font-weight:600;color:var(--primary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.test-row{display:flex;gap:10px;margin-bottom:10px}
+.test-row input{flex:1;padding:8px 12px;background:var(--card);border:1px solid var(--cb);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s}
+.test-row input:focus{border-color:var(--primary)}
+.btn-test{padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-test:hover{background:var(--primary-h)}
+.test-result{font-size:.82rem;font-weight:600;min-height:22px}
+.test-result.match{color:var(--low)}
+.test-result.no-match{color:var(--critical)}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--cb)}
+.btn-cancel{padding:10px 20px;background:#374151;color:var(--text);border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{background:#4b5563}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1100;justify-content:center;align-items:center}
+.confirm-overlay.active{display:flex;animation:fi .2s ease}
+.confirm-dialog{background:#1a1f2e;border:1px solid var(--cb);border-radius:14px;padding:28px;width:400px;max-width:90vw;text-align:center;animation:si .3s ease;box-shadow:0 25px 60px rgba(0,0,0,.5)}
+.confirm-dialog h3{font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px}
+.confirm-dialog p{font-size:.85rem;color:var(--tm);margin-bottom:22px}
+.confirm-actions{display:flex;justify-content:center;gap:10px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .4s ease}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:10px}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;font-size:.84rem;font-weight:500;color:#fff;min-width:280px;max-width:420px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:ti .35s ease;backdrop-filter:blur(10px)}
+.toast.toast-out{animation:to .3s ease forwards}
+@keyframes ti{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes to{from{transform:translateX(0);opacity:1}to{transform:translateX(100px);opacity:0}}
+.toast-success{background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(34,197,94,.08));border:1px solid rgba(34,197,94,.3)}
+.toast-error{background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.08));border:1px solid rgba(239,68,68,.3)}
+.toast-info{background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(99,102,241,.08));border:1px solid rgba(99,102,241,.3)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--td)}
+.empty-state .empty-icon{font-size:3rem;margin-bottom:16px}
+.empty-state h3{font-size:1.1rem;color:var(--tm);margin-bottom:6px}
+.empty-state p{font-size:.85rem}
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.container{padding:20px}.header{padding:24px 20px 20px}}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr}.action-bar{flex-direction:column}.rule-header{flex-direction:column;align-items:flex-start;gap:10px}.rule-actions{flex-wrap:wrap}}
+  </style>
+</head>
+<body>
+<div class="error-banner" id="errorBanner">⚠️ Cannot connect to CASB Dashboard API at localhost:5001</div>
+<header class="header"><div class="header-content"><h1><span>🛡️</span>CASB Security Gateway</h1><p class="subtitle">DLP Policy Management Console</p><p class="last-updated" id="lastUpdated">Last Updated: —</p></div></header>
+<main class="container">
+<section class="stats-row">
+<div class="stat-card"><div class="stat-label">Total Rules</div><div class="stat-value" id="statTotal">0</div></div>
+<div class="stat-card"><div class="stat-label">Active Rules</div><div class="stat-value" id="statActive">0</div></div>
+<div class="stat-card"><div class="stat-label">Disabled Rules</div><div class="stat-value" id="statDisabled">0</div></div>
+<div class="stat-card"><div class="stat-label">Critical Rules</div><div class="stat-value" id="statCritical">0</div></div>
+</section>
+<section class="action-bar">
+<button class="btn btn-primary" onclick="openAddModal()">➕ Add New Rule</button>
+<div class="search-box"><span class="search-icon">🔍</span><input type="text" id="searchInput" placeholder="Filter rules by name…" oninput="filterRules()"></div>
+</section>
+<section class="rules-list" id="rulesList"><div class="empty-state"><div class="empty-icon">📡</div><h3>Loading rules…</h3><p>Connecting to CASB API</p></div></section>
+</main>
+<div class="modal-overlay" id="ruleModal"><div class="modal">
+<div class="modal-header"><h2 id="modalTitle">Add New Rule</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
+<div class="modal-body">
+<input type="hidden" id="ruleId">
+<div class="form-group"><label>Name</label><input type="text" id="ruleName" placeholder="e.g. Social Security Number"></div>
+<div class="form-group"><label>Severity</label><select id="ruleSeverity"><option value="critical">Critical</option><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+<div class="form-group"><label>Regex Pattern</label><textarea id="rulePattern" class="mono-input" placeholder="e.g. \b\d{3}-\d{2}-\d{4}\b"></textarea></div>
+<div class="form-group"><label>Violation Message</label><textarea id="ruleDetail" placeholder="CASB Policy Violation: ..."></textarea></div>
+<div class="test-section"><h3>🧪 Test Pattern</h3><div class="test-row"><input type="text" id="testSample" placeholder="Enter sample text to test…"><button class="btn-test" onclick="testPattern()">▶ Test</button></div><div class="test-result" id="testResult"></div></div>
+</div>
+<div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveRule()">Save Rule</button></div>
+</div></div>
+<div class="confirm-overlay" id="confirmOverlay"><div class="confirm-dialog" id="confirmDialog">
+<h3>🗑️ Delete Rule</h3><p id="confirmMsg">Are you sure you want to delete this rule?</p>
+<div class="confirm-actions"><button class="btn-cancel" onclick="closeConfirm()">Cancel</button><button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Delete</button></div>
+</div></div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+const API='http://localhost:5001';
+let rules=[];
+let deleteTargetId=null;
+
+async function fetchRules(){
+  try{
+    const r=await fetch(API+'/api/rules');
+    if(!r.ok) throw new Error('API error');
+    rules=await r.json();
+    document.getElementById('errorBanner').classList.remove('visible');
+    updateStats();
+    renderRules();
+    updateTimestamp();
+  }catch(e){
+    document.getElementById('errorBanner').classList.add('visible');
+    document.getElementById('rulesList').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><h3>API Unreachable</h3><p>Cannot connect to CASB Dashboard API at localhost:5001</p></div>';
+  }
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent=rules.length;
+  document.getElementById('statActive').textContent=rules.filter(r=>r.enabled).length;
+  document.getElementById('statDisabled').textContent=rules.filter(r=>!r.enabled).length;
+  document.getElementById('statCritical').textContent=rules.filter(r=>r.severity==='critical').length;
+}
+
+function updateTimestamp(){
+  const now=new Date();
+  document.getElementById('lastUpdated').textContent='Last Updated: '+now.toLocaleString();
+}
+
+function escapeHtml(t){
+  const d=document.createElement('div');
+  d.textContent=t;
+  return d.innerHTML;
+}
+
+function renderRules(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const filtered=rules.filter(r=>r.name.toLowerCase().includes(q));
+  const list=document.getElementById('rulesList');
+  if(filtered.length===0){
+    list.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><h3>No rules found</h3><p>'+(q?'No rules match your search':'No DLP rules configured yet')+'</p></div>';
+    return;
+  }
+  list.innerHTML=filtered.map(r=>`
+    <div class="rule-card${r.enabled?'':' disabled-rule'}" data-id="${r.id}">
+      <div class="rule-header">
+        <div class="rule-header-left">
+          <span class="rule-name">${escapeHtml(r.name)}</span>
+          <span class="severity-badge severity-${r.severity}">${r.severity}</span>
+        </div>
+        <div class="toggle-wrapper">
+          <span class="toggle-label">${r.enabled?'Enabled':'Disabled'}</span>
+          <label class="toggle"><input type="checkbox" ${r.enabled?'checked':''} onchange="toggleRule('${r.id}')"><span class="slider"></span></label>
+        </div>
+      </div>
+      <div class="rule-pattern"><code>${escapeHtml(r.pattern)}</code></div>
+      <div class="rule-detail">${escapeHtml(r.detail)}</div>
+      <div class="rule-actions">
+        <button class="btn btn-blue btn-sm" onclick="testRuleInline('${r.id}')">🧪 Test</button>
+        <button class="btn btn-yellow btn-sm" onclick="openEditModal('${r.id}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="showDeleteConfirm('${r.id}','${escapeHtml(r.name)}')">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterRules(){renderRules();}
+
+async function toggleRule(id){
+  try{
+    const r=await fetch(API+'/api/rules/'+id+'/toggle',{method:'POST'});
+    const d=await r.json();
+    const rule=rules.find(x=>x.id===id);
+    if(rule) rule.enabled=d.enabled;
+    updateStats();
+    renderRules();
+    showToast(rule.name+' '+(d.enabled?'enabled':'disabled'),'info');
+  }catch(e){showToast('Failed to toggle rule','error');}
+}
+
+function openAddModal(){
+  document.getElementById('modalTitle').textContent='Add New Rule';
+  document.getElementById('ruleId').value='';
+  document.getElementById('ruleName').value='';
+  document.getElementById('ruleSeverity').value='medium';
+  document.getElementById('rulePattern').value='';
+  document.getElementById('ruleDetail').value='';
+  document.getElementById('testSample').value='';
+  document.getElementById('testResult').textContent='';
+  document.getElementById('testResult').className='test-result';
+  document.getElementById('ruleModal').classList.add('active');
+}
+
+function openEditModal(id){
+  const rule=rules.find(r=>r.id===id);
+  if(!rule) return;
+  document.getElementById('modalTitle').textContent='Edit Rule';
+  document.getElementById('ruleId').value=rule.id;
+  document.getElementById('ruleName').value=rule.name;
+  document.getElementById('ruleSeverity').value=rule.severity;
+  document.getElementById('rulePattern').value=rule.pattern;
+  document.getElementById('ruleDetail').value=rule.detail;
+  document.getElementById('testSample').value='';
+  document.getElementById('testResult').textContent='';
+  document.getElementById('testResult').className='test-result';
+  document.getElementById('ruleModal').classList.add('active');
+}
+
+function closeModal(){
+  document.getElementById('ruleModal').classList.remove('active');
+}
+
+async function saveRule(){
+  const id=document.getElementById('ruleId').value;
+  const name=document.getElementById('ruleName').value.trim();
+  const severity=document.getElementById('ruleSeverity').value;
+  const pattern=document.getElementById('rulePattern').value.trim();
+  const detail=document.getElementById('ruleDetail').value.trim();
+  if(!name||!pattern||!detail){showToast('Please fill in all fields','error');return;}
+  const body={name,pattern,detail,severity,enabled:true};
+  try{
+    let r;
+    if(id){
+      r=await fetch(API+'/api/rules/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    }else{
+      r=await fetch(API+'/api/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    }
+    const d=await r.json();
+    if(d.error){showToast(d.error,'error');return;}
+    closeModal();
+    showToast(id?'Rule updated successfully':'Rule created successfully','success');
+    fetchRules();
+  }catch(e){showToast('Failed to save rule','error');}
+}
+
+async function testPattern(){
+  const pattern=document.getElementById('rulePattern').value;
+  const sample=document.getElementById('testSample').value;
+  const el=document.getElementById('testResult');
+  if(!pattern){el.textContent='Enter a regex pattern first';el.className='test-result no-match';return;}
+  if(!sample){el.textContent='Enter sample text to test';el.className='test-result no-match';return;}
+  try{
+    const r=await fetch(API+'/api/rules/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pattern,sample})});
+    const d=await r.json();
+    if(d.error){el.textContent='❌ '+d.error;el.className='test-result no-match';return;}
+    if(d.match){el.textContent='✅ MATCH — "'+d.matched_text+'"';el.className='test-result match';}
+    else{el.textContent='❌ NO MATCH';el.className='test-result no-match';}
+  }catch(e){el.textContent='❌ API error';el.className='test-result no-match';}
+}
+
+function testRuleInline(id){
+  const rule=rules.find(r=>r.id===id);
+  if(!rule) return;
+  openEditModal(id);
+  setTimeout(()=>document.getElementById('testSample').focus(),300);
+}
+
+function showDeleteConfirm(id,name){deleteTargetId=id;document.getElementById('confirmMsg').textContent='Are you sure you want to delete "'+name+'"?';var dlg=document.getElementById('confirmDialog');dlg.classList.add('shake');setTimeout(function(){dlg.classList.remove('shake');},500);document.getElementById('confirmOverlay').classList.add('active');}
+function closeConfirm(){deleteTargetId=null;document.getElementById('confirmOverlay').classList.remove('active');}
+async function confirmDelete(){if(!deleteTargetId)return;try{var r=await fetch(API+'/api/rules/'+deleteTargetId,{method:'DELETE'});var d=await r.json();if(d.error){showToast(d.error,'error');return;}closeConfirm();showToast('Rule deleted successfully','success');fetchRules();}catch(e){showToast('Failed to delete rule','error');}}
+function showToast(msg,type){var c=document.getElementById('toastContainer');var icons={success:'✅',error:'❌',info:'ℹ️'};var t=document.createElement('div');t.className='toast toast-'+type;t.innerHTML=(icons[type]||'')+' '+msg;c.appendChild(t);setTimeout(function(){t.classList.add('toast-out');setTimeout(function(){t.remove();},300);},3000);}
+document.getElementById('testSample').addEventListener('input',function(){var pattern=document.getElementById('rulePattern').value;var sample=this.value;var el=document.getElementById('testResult');if(!pattern||!sample){el.textContent='';el.className='test-result';return;}testPattern();});
+document.addEventListener('DOMContentLoaded',fetchRules);
+</script>
+</body>
+</html>
