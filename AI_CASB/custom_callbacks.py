@@ -110,29 +110,42 @@ class SecOpsGateway(CustomLogger):
         # ── Extract the user's actual message early (used for logging across all layers) ──
         # We scan prompt_str (the full array) for security, but log only last_user_msg
         # so Splunk shows the developer's input — not Cline's XML wrapper or directory listing.
+        import re as _re
         user_messages = data.get("messages", [])
         last_user_msg = "(no user message found)"
+
+        # First pass: search ALL user messages for the last <task> tag (most reliable)
         for msg in reversed(user_messages):
             if isinstance(msg, dict) and msg.get("role") == "user":
                 content = msg.get("content", "")
-                if isinstance(content, list):  # Handle multi-part content (e.g. vision)
+                if isinstance(content, list):
                     content = " ".join(p.get("text", "") for p in content if isinstance(p, dict))
                 content = str(content)
 
-                # ── Strip Cline's XML envelope ───────────────────────────────
-                # Cline wraps the user's text in <task>...</task> followed by
-                # <environment_details>...</environment_details> (file list, timestamps, etc.)
-                # We extract just the <task> content; if no XML, use the raw content.
-                import re as _re
                 task_match = _re.search(r'<task>(.*?)</task>', content, _re.DOTALL)
                 if task_match:
-                    content = task_match.group(1).strip()
-                else:
-                    # Fallback: strip any remaining XML-like tags and truncate
-                    content = _re.sub(r'<[^>]+>.*?</[^>]+>', '', content, flags=_re.DOTALL).strip()
+                    last_user_msg = task_match.group(1).strip()[:800]
+                    break
 
-                last_user_msg = content[:800]
-                break
+        # Fallback: if no <task> tag found, take the last paragraph of the last user message.
+        # In Cline multi-turn, the human's actual input is always the last paragraph,
+        # above it is tool-use error text and retry instructions that confuse the classifier.
+        if last_user_msg == "(no user message found)":
+            for msg in reversed(user_messages):
+                if isinstance(msg, dict) and msg.get("role") == "user":
+                    content = msg.get("content", "")
+                    if isinstance(content, list):
+                        content = " ".join(p.get("text", "") for p in content if isinstance(p, dict))
+                    content = str(content)
+                    # Strip all XML blocks
+                    cleaned = _re.sub(r'<[^>]+>.*?</[^>]+>', '', content, flags=_re.DOTALL).strip()
+                    # Take the last non-empty paragraph (the human's actual question)
+                    paragraphs = [p.strip() for p in cleaned.split('\n\n') if p.strip()]
+                    if paragraphs:
+                        last_user_msg = paragraphs[-1][:800]
+                    elif cleaned:
+                        last_user_msg = cleaned[-800:]
+                    break
 
         # Hard cap on prompt size to prevent prompt-stuffing (1M chars supports full agent contexts)
         if len(prompt_str) > 1_000_000:
@@ -140,7 +153,7 @@ class SecOpsGateway(CustomLogger):
             raise HTTPException(status_code=413, detail="CASB Policy Violation: Prompt too large.")
 
         # ── LAYER 1: Shannon Entropy Analysis (Anti-Obfuscation) ────────────
-        is_suspicious, entropy_score, snippet = check_entropy_violations(prompt_str)
+        is_suspicious, entropy_score, snippet = check_entropy_violations(last_user_msg)
         if is_suspicious:
             print(f"\n🚨 [CASB L1] BLOCKED: High entropy payload ({entropy_score}) — possible Base64/obfuscation attack!")
             await self._log_to_splunk({
@@ -192,7 +205,7 @@ class SecOpsGateway(CustomLogger):
         for rule in rules:
             if not rule.get("enabled", True):
                 continue
-            if re.search(rule["pattern"], prompt_str):
+            if re.search(rule["pattern"], last_user_msg):
                 print(f"\n🚨 [CASB L2] BLOCKED: {rule['name']} detected!")
                 await self._log_to_splunk({
                     "action": "dlp_block",

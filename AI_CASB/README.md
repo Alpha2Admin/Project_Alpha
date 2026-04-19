@@ -2,7 +2,7 @@
 
 > **The security layer your AI coding agents don't know exists.**
 
-As AI coding agents like **Cline**, **Continue**, **GitHub Copilot**, and **Cursor** become the default interface for software development, they introduce a new and largely unaddressed attack surface: **the prompt channel**. Developers now write code by having conversations with AI — and every one of those conversations is a potential vector for:
+As AI coding agents like **Cline**, **Continue**, and **Cursor** become the default interface for software development, they introduce a new and largely unaddressed attack surface: **the prompt channel**. Developers now write code by having conversations with AI — and every one of those conversations is a potential vector for:
 
 - **Prompt Injection** — malicious instructions embedded in code, files, or user input that hijack your AI agent's behaviour
 - **Data Exfiltration** — sensitive credentials, PII, or proprietary code leaking into model context
@@ -34,7 +34,7 @@ Traditional CASB, DLP, and WAF tools were not designed for this. **AI-CASB was.*
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                                                      │
-│    🤖 AI Coding Agents (Cline / Continue / Cursor / Copilot)        │
+│    🤖 AI Coding Agents (Cline / Continue / Cursor)                  │
 │                                                                      │
 └──────────────────────────────┬───────────────────────────────────────┘
                                │ Every prompt, every time
@@ -63,13 +63,14 @@ Traditional CASB, DLP, and WAF tools were not designed for this. **AI-CASB was.*
 │  └───────────────────────────┬─────────────────────────────────┘     │
 │                              │ PASS                                  │
 │                              ▼                                       │
-│                     ┌─────────────────┐                              │
-│                     │   LLM Engine    │                              │
-│                     │ Ollama / LMStudio│                             │
-│                     └────────┬────────┘                              │
-│                              │ Response                              │
-│  ┌───────────────────────────▼─────────────────────────────────┐     │
-│  │  L3 · Egress Filter + Canary Token Honeypot     < 1ms       │     │
+│                     ┌───────────────────────────────┐        │
+│                     │         LLM Engine            │        │
+│                     │  Local: Ollama / LMStudio     │        │
+│                     │  Cloud: OpenRouter / OpenAI   │        │
+│                     └──────────────┬────────────────┘        │
+│                                    │ Response                │
+│  ┌─────────────────────────────────▼───────────────────┐     │
+│  │  L3 · Egress Filter + Canary Token Honeypot         │     │
 │  │  Scans AI responses for leaked secrets before delivery      │     │
 │  │  Canary token injected into system prompt to detect theft   │     │
 │  │  Critical alert if model repeats hidden instructions        │     │
@@ -144,6 +145,13 @@ Instantly block specific malicious phrases or jailbreak templates. Paste a list 
 - **Hot-reload** — active immediately without resetting sessions
 - **Case-insensitive & Word-boundary options**
 
+### 🌍 Universal API Integration (100+ Providers)
+Because the CASB core is powered by LiteLLM, it acts as a universal translator. To your IDE (Continue, Cline, Cursor), the CASB simply pretends to be a standard OpenAI proxy. Behind the scenes, the gateway can seamlessly route securely to:
+- **Cloud Providers:** OpenRouter, Anthropic, OpenAI, Google Gemini API, Groq.
+- **Enterprise Cloud:** AWS Bedrock, Azure OpenAI, Google Vertex AI.
+- **Local Providers:** Ollama, LM Studio, vLLM.
+Just insert your API key into the `.env` and add a one-line wildcard route in `config.yaml` to securely proxy out to anywhere in the world.
+
 ### 🎛️ Interactive Management Dashboard
 - **DLP Rules** — Full CRUD for standard regex rules
 - **Phrase Blocklist** — Bulk policy creation from plain text
@@ -200,6 +208,10 @@ Launches:
 - **CASB Dashboard** → `http://localhost:5001`
 - **Splunk SOC** → `http://localhost:8000`
 
+**🔄 Dynamic Config Backup:** 
+When `./start_casb.sh` is executed, it automatically intercepts your `~/.continue/config.yaml` file, backs up your direct connections, and slots in a CASB-secured proxy configuration pointing to `localhost:4000`. 
+When you hit `Ctrl+C` or run `./stop_casb.sh`, the system cleanly restores your original clean configuration. No manual YAML editing is required to jump in and out of the CASB lab!
+
 > On first request, the DeBERTa classifier (~700MB) downloads automatically from HuggingFace and caches locally. Subsequent starts load from cache in ~2 seconds.
 
 ### 5. Point Your AI Agent at the Gateway
@@ -252,13 +264,23 @@ curl -s http://localhost:4000/v1/chat/completions \
 # → 403: Semantic analysis detected a prompt injection attempt (confidence: 100%)
 ```
 
-### Layer 2 — DLP Regex
+### Layer 2 — DLP Regex (Ingress)
 ```bash
 curl -s http://localhost:4000/v1/chat/completions \
   -H "Authorization: Bearer YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"YOUR_MODEL","messages":[{"role":"user","content":"My AWS key is AKIA6PV7ABCDEFGH1234"}]}'
 # → 403: AWS Access Key detected
+```
+
+### Layer 3 — Egress DLP Filter
+To test Egress, ask the AI to generate sensitive data without putting the data in the prompt itself. The proxy intercepts the *response* before it reaches the IDE.
+```bash
+curl -s http://localhost:4000/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"YOUR_MODEL","messages":[{"role":"user","content":"Generate a fake 16-digit Visa credit card number."}]}'
+# → 403: CASB Egress Violation: AI response contained sensitive data (Credit Card Number). Response suppressed.
 ```
 
 ### Verify in Splunk
