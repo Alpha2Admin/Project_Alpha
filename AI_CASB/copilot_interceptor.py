@@ -57,8 +57,8 @@ class CopilotCASB:
         if flow.request.content:
             try:
                 body = flow.request.content.decode('utf-8', errors='ignore')
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️ [CASB ERROR] Failed to decode request body: {e}")
         
         if not body:
             return
@@ -137,8 +137,8 @@ class CopilotCASB:
         if flow.response and flow.response.content:
             try:
                 body = flow.response.content.decode('utf-8', errors='ignore')
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️ [CASB ERROR] Failed to decode response body: {e}")
         
         if not body:
             return
@@ -220,8 +220,8 @@ class CopilotCASB:
                 body = message.content.decode('utf-8', errors='ignore')
             else:
                 body = str(message.content)
-        except:
-            pass
+        except Exception as e:
+            print(f"⚠️ [CASB ERROR] Failed to decode websocket message: {e}")
 
         if not body:
             return

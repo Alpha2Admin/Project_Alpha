@@ -314,8 +314,8 @@ class SecOpsGateway(CustomLogger):
                 return str(getattr(user_api_key_dict, 'user_id'))
             if isinstance(user_api_key_dict, dict) and user_api_key_dict.get('user_id'):
                 return str(user_api_key_dict.get('user_id'))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ [CASB ERROR] Failed to parse user_api_key_dict: {e}")
         return "ide_user"
 
     async def _log_to_splunk(self, event_data: dict):
