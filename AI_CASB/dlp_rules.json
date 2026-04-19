@@ -92,7 +92,7 @@
   {
     "id": "rule_011",
     "name": "Canary Token Exfiltration",
-    "pattern": "sk-casb-canary-9fa82b3c-DO-NOT-REVEAL",
+    "pattern": "CASB_CANARY_TOKEN_PLACEHOLDER",
     "detail": "CASB CRITICAL: Honeypot canary token detected in response. System prompt was exfiltrated!",
     "enabled": true,
     "severity": "critical",
@@ -101,7 +101,7 @@
   {
     "id": "rule_012",
     "name": "IPS: System Context Extraction (Social Engineering)",
-    "pattern": "(?i)(initialization block|system.level constants|hidden environmental strings|internal.metadata|system context|diagnostic protocol.*list.*constants)",
+    "pattern": "(?i)(initialization\\s*block|system\\.?level\\s*constants|hidden\\s*environmental\\s*strings|internal\\.?metadata|system\\s*context|diagnostic\\s*protocol|internal\\s*directive|environment\\s*initialization)",
     "detail": "CASB Security Violation: Social engineering attempt to extract system configuration detected.",
     "enabled": true,
     "severity": "critical",
