@@ -63,13 +63,14 @@ Traditional CASB, DLP, and WAF tools were not designed for this. **AI-CASB was.*
 │  └───────────────────────────┬─────────────────────────────────┘     │
 │                              │ PASS                                  │
 │                              ▼                                       │
-│                     ┌─────────────────┐                              │
-│                     │   LLM Engine    │                              │
-│                     │ Ollama / LMStudio│                             │
-│                     └────────┬────────┘                              │
-│                              │ Response                              │
-│  ┌───────────────────────────▼─────────────────────────────────┐     │
-│  │  L3 · Egress Filter + Canary Token Honeypot     < 1ms       │     │
+│                     ┌───────────────────────────────┐        │
+│                     │         LLM Engine            │        │
+│                     │  Local: Ollama / LMStudio     │        │
+│                     │  Cloud: OpenRouter / OpenAI   │        │
+│                     └──────────────┬────────────────┘        │
+│                                    │ Response                │
+│  ┌─────────────────────────────────▼───────────────────┐     │
+│  │  L3 · Egress Filter + Canary Token Honeypot         │     │
 │  │  Scans AI responses for leaked secrets before delivery      │     │
 │  │  Canary token injected into system prompt to detect theft   │     │
 │  │  Critical alert if model repeats hidden instructions        │     │
@@ -143,6 +144,13 @@ Instantly block specific malicious phrases or jailbreak templates. Paste a list 
 - **Bulk creation** — add dozens of banned phrases in seconds
 - **Hot-reload** — active immediately without resetting sessions
 - **Case-insensitive & Word-boundary options**
+
+### 🌍 Universal API Integration (100+ Providers)
+Because the CASB core is powered by LiteLLM, it acts as a universal translator. To your IDE (Continue, Cline, Copilot), the CASB simply pretends to be a standard OpenAI proxy. Behind the scenes, the gateway can seamlessly route securely to:
+- **Cloud Providers:** OpenRouter, Anthropic, OpenAI, Google Gemini API, Groq.
+- **Enterprise Cloud:** AWS Bedrock, Azure OpenAI, Google Vertex AI.
+- **Local Providers:** Ollama, LM Studio, vLLM.
+Just insert your API key into the `.env` and add a one-line wildcard route in `config.yaml` to securely proxy out to anywhere in the world.
 
 ### 🎛️ Interactive Management Dashboard
 - **DLP Rules** — Full CRUD for standard regex rules
