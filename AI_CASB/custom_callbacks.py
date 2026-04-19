@@ -20,7 +20,7 @@ if not SPLUNK_HEC_TOKEN:
 # This fake secret is injected into the LLM system prompt via config.yaml.
 # If the model ever outputs this in a response, it means an attacker successfully
 # extracted the hidden system prompt. The gateway will immediately fire a CRITICAL alert.
-CANARY_TOKEN = os.getenv("CASB_CANARY_TOKEN", "sk-casb-fallback-canary-uuid-change-me")
+CANARY_TOKEN = os.getenv("CASB_CANARY_TOKEN", "")
 
 # ── Entropy Thresholds (Anti-Obfuscation / Anti-Base64) ──────────────────────
 # Natural English hovers around 3.5-4.2 entropy.
