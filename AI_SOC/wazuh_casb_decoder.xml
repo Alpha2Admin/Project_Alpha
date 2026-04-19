@@ -1,0 +1,14 @@
+<!--
+  AI-CASB Custom Decoder for Wazuh
+  ================================
+  Identifies and parses JSON events written by the CASB gateway
+  to /var/ossec/logs/casb_risk_alerts.json
+
+  Deploy to: /var/ossec/etc/decoders/casb_decoder.xml
+  (inside the Wazuh Manager container)
+-->
+
+<decoder name="casb-json">
+  <prematch>^{"source": "ai-casb"</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>

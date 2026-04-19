@@ -1,0 +1,274 @@
+<!--
+  AI-CASB Custom Rules for Wazuh
+  ==============================
+  Multi-severity rules with frequency chaining and MITRE ATT&CK / ATLAS mappings.
+
+  Rule ID Range: 100100 - 100199 (reserved for AI-CASB)
+  Deploy to: /var/ossec/etc/rules/casb_rules.xml
+  (inside the Wazuh Manager container)
+
+  JSON Fields Available (from casb_decoder.xml):
+    source      = "ai-casb"
+    action      = dlp_block | dlp_flagged | evasion_attempt | intrusion_detected |
+                  egress_block | egress_flagged | user_quarantined | user_rate_limited |
+                  tool_execution_authorized
+    layer       = L0_Normalizer | L0.5_RBAC_Tool_Control | L1_Entropy_Analysis |
+                  L1.5_Semantic_Classifier | L2_DLP_Regex | L3_Egress_Filter |
+                  L3_Canary_Honeypot | L4_Action_Governance | L4_Action_Governance_RBAC |
+                  Conv_Tracker
+    rule        = (human-readable rule name)
+    severity    = critical | high | medium | low
+    user        = (LDAP username)
+    risk_score  = (float, e.g. "57.78")
+    risk_level  = critical | high | medium | low
+    prompt_preview = (first 300 chars of user prompt)
+-->
+
+<group name="ai-casb,">
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       BASE RULE — Parent for all CASB events
+       ════════════════════════════════════════════════════════════════════ -->
+  <rule id="100100" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="source">ai-casb</field>
+    <description>AI-CASB: Security event received from gateway.</description>
+    <group>ai-casb,</group>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SEVERITY-BASED RULES (child of 100100)
+       ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- CRITICAL severity — immediate analyst attention -->
+  <rule id="100101" level="14">
+    <if_sid>100100</if_sid>
+    <field name="severity">critical</field>
+    <description>AI-CASB CRITICAL: $(rule) — User: $(user) [Layer: $(layer)]</description>
+    <group>ai-casb,security_violation,critical,</group>
+    <mitre>
+      <id>T1190</id>
+      <id>T1059</id>
+    </mitre>
+  </rule>
+
+  <!-- HIGH severity -->
+  <rule id="100102" level="12">
+    <if_sid>100100</if_sid>
+    <field name="severity">high</field>
+    <description>AI-CASB HIGH: $(rule) — User: $(user) [Layer: $(layer)]</description>
+    <group>ai-casb,security_violation,high,</group>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+  </rule>
+
+  <!-- MEDIUM severity -->
+  <rule id="100103" level="8">
+    <if_sid>100100</if_sid>
+    <field name="severity">medium</field>
+    <description>AI-CASB MEDIUM: $(rule) — User: $(user) [Layer: $(layer)]</description>
+    <group>ai-casb,security_violation,medium,</group>
+  </rule>
+
+  <!-- LOW severity -->
+  <rule id="100104" level="5">
+    <if_sid>100100</if_sid>
+    <field name="severity">low</field>
+    <description>AI-CASB LOW: $(rule) — User: $(user) [Layer: $(layer)]</description>
+    <group>ai-casb,security_flagged,low,</group>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       ACTION-SPECIFIC RULES (child of 100100)
+       More precise detection for specific attack patterns
+       ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Prompt Injection Detected (DeBERTa Semantic Classifier) -->
+  <rule id="100110" level="14">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">dlp_block</field>
+    <field name="layer">L1.5_Semantic_Classifier</field>
+    <description>AI-CASB: Prompt Injection detected by ML classifier — User: $(user). Rule: $(rule)</description>
+    <group>ai-casb,prompt_injection,ml_detection,</group>
+    <mitre>
+      <id>T1190</id>
+      <id>T1059.004</id>
+    </mitre>
+  </rule>
+
+  <!-- Canary Token Exfiltration (System Prompt Leak) — HIGHEST SEVERITY -->
+  <rule id="100111" level="15">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">intrusion_detected</field>
+    <field name="layer">L3_Canary_Honeypot</field>
+    <description>AI-CASB CRITICAL: Canary token exfiltrated — system prompt leaked! User: $(user)</description>
+    <group>ai-casb,intrusion,canary_exfiltration,</group>
+    <mitre>
+      <id>T1552</id>
+      <id>T1005</id>
+    </mitre>
+  </rule>
+
+  <!-- Evasion Attempt (Unicode/Base64/ROT13/Homoglyph obfuscation) -->
+  <rule id="100112" level="12">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">evasion_attempt</field>
+    <description>AI-CASB: Prompt evasion technique detected — User: $(user). Rule: $(rule)</description>
+    <group>ai-casb,evasion,obfuscation,</group>
+    <mitre>
+      <id>T1027</id>
+      <id>T1140</id>
+    </mitre>
+  </rule>
+
+  <!-- SOAR: User Auto-Quarantined -->
+  <rule id="100113" level="13">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">user_quarantined</field>
+    <description>AI-CASB SOAR: User $(user) has been AUTO-QUARANTINED (Risk Score: $(risk_score))</description>
+    <group>ai-casb,soar,quarantine,</group>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <!-- RBAC: Unauthorized Tool Use (Standard user attempted agent commands) -->
+  <rule id="100114" level="13">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">dlp_block</field>
+    <field name="layer">L0.5_RBAC_Tool_Control</field>
+    <description>AI-CASB RBAC: Unauthorized tool use attempt by $(user) — standard user tried to invoke autonomous agent commands.</description>
+    <group>ai-casb,rbac,unauthorized_tool,</group>
+    <mitre>
+      <id>T1059</id>
+      <id>T1078.003</id>
+    </mitre>
+  </rule>
+
+  <!-- Egress: Data Leak in AI Response -->
+  <rule id="100115" level="12">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">egress_block</field>
+    <description>AI-CASB Egress: Sensitive data detected in AI response — User: $(user). Rule: $(rule)</description>
+    <group>ai-casb,data_leak,egress,</group>
+    <mitre>
+      <id>T1048</id>
+      <id>T1530</id>
+    </mitre>
+  </rule>
+
+  <!-- DLP Ingress: Regex match on user prompt (Layer 2) -->
+  <rule id="100116" level="12">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">dlp_block</field>
+    <field name="layer">L2_DLP_Regex</field>
+    <description>AI-CASB DLP: Policy violation in user prompt — User: $(user). Rule: $(rule)</description>
+    <group>ai-casb,dlp,ingress,</group>
+    <mitre>
+      <id>T1552</id>
+    </mitre>
+  </rule>
+
+  <!-- Entropy: Obfuscated payload detected (Layer 1) -->
+  <rule id="100117" level="12">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">dlp_block</field>
+    <field name="layer">L1_Entropy_Analysis</field>
+    <description>AI-CASB Entropy: Obfuscated/encoded payload detected — User: $(user).</description>
+    <group>ai-casb,entropy,obfuscation,</group>
+    <mitre>
+      <id>T1027</id>
+      <id>T1059</id>
+    </mitre>
+  </rule>
+
+  <!-- Developer Restricted Command (L4 — reverse shell, reg add, etc.) -->
+  <rule id="100118" level="14">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">egress_block</field>
+    <field name="layer">L4_Action_Governance</field>
+    <description>AI-CASB L4: Developer $(user) attempted restricted command execution. Rule: $(rule)</description>
+    <group>ai-casb,action_governance,restricted_command,</group>
+    <mitre>
+      <id>T1059</id>
+      <id>T1053</id>
+    </mitre>
+  </rule>
+
+  <!-- Multi-Turn Behavioral Pattern (Conversation Tracker) -->
+  <rule id="100119" level="12">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">multi_turn_pattern</field>
+    <description>AI-CASB Behavioral: Multi-turn attack pattern detected for $(user) — $(rule)</description>
+    <group>ai-casb,behavioral,multi_turn,</group>
+    <mitre>
+      <id>T1190</id>
+      <id>T1204</id>
+    </mitre>
+  </rule>
+
+  <!-- SOAR: User Rate Limited -->
+  <rule id="100120" level="10">
+    <if_sid>100100</if_sid>
+    <field name="casb_action">user_rate_limited</field>
+    <description>AI-CASB SOAR: User $(user) has been RATE LIMITED (Risk Score: $(risk_score))</description>
+    <group>ai-casb,soar,rate_limit,</group>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       FREQUENCY-BASED CHAINING RULES
+       Fire when multiple events from the same user occur within a window.
+       These provide behavioral detection beyond single-event matching.
+       ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- 3+ HIGH severity events from same user in 5 minutes → Escalate to CRITICAL -->
+  <rule id="100130" level="14" frequency="3" timeframe="300">
+    <if_matched_sid>100102</if_matched_sid>
+    <same_field>user</same_field>
+    <description>AI-CASB ESCALATION: User $(user) triggered 3+ HIGH severity events in 5 minutes — possible active attack.</description>
+    <group>ai-casb,escalation,brute_force,</group>
+    <mitre>
+      <id>T1190</id>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <!-- 5+ any CASB events from same user in 10 minutes → Sustained probing -->
+  <rule id="100131" level="13" frequency="5" timeframe="600">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_field>user</same_field>
+    <description>AI-CASB BEHAVIORAL: User $(user) generated 5+ security events in 10 minutes — sustained probing activity.</description>
+    <group>ai-casb,behavioral,sustained_probing,</group>
+    <mitre>
+      <id>T1595</id>
+      <id>T1046</id>
+    </mitre>
+  </rule>
+
+  <!-- 2+ CRITICAL events from same user in 3 minutes → Active compromise -->
+  <rule id="100132" level="15" frequency="2" timeframe="180">
+    <if_matched_sid>100101</if_matched_sid>
+    <same_field>user</same_field>
+    <description>AI-CASB ACTIVE THREAT: User $(user) triggered 2+ CRITICAL events in 3 minutes — IMMEDIATE INVESTIGATION REQUIRED.</description>
+    <group>ai-casb,active_threat,immediate,</group>
+    <mitre>
+      <id>T1190</id>
+      <id>T1059</id>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <!-- Quarantine followed by continued activity → Quarantine evasion attempt -->
+  <rule id="100133" level="14" frequency="2" timeframe="300">
+    <if_matched_sid>100113</if_matched_sid>
+    <same_field>user</same_field>
+    <description>AI-CASB: User $(user) triggered quarantine multiple times — possible quarantine evasion or account sharing.</description>
+    <group>ai-casb,quarantine_evasion,</group>
+    <mitre>
+      <id>T1078</id>
+      <id>T1036</id>
+    </mitre>
+  </rule>
+
+</group>

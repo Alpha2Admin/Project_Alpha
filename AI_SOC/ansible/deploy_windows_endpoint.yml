@@ -1,0 +1,106 @@
+---
+- name: Deploy SOC Windows Endpoint
+  hosts: windows
+  vars:
+    wazuh_manager_ip: "192.168.100.30"
+    casb_gateway_ip: "192.168.100.10"
+    casb_proxy_port: "4000"
+
+  tasks:
+    - name: Ensure target directories exist
+      win_file:
+        path: C:\AdminTools
+        state: directory
+
+    - name: Copy Sysmon zip to host
+      win_copy:
+        src: files/agents/Sysmon.zip
+        dest: C:\AdminTools\Sysmon.zip
+
+    - name: Unzip Sysmon
+      win_unzip:
+        src: C:\AdminTools\Sysmon.zip
+        dest: C:\AdminTools\Sysmon
+
+    - name: Copy Sysmon configuration file
+      win_copy:
+        src: files/sysmonconfig.xml
+        dest: C:\AdminTools\Sysmon\sysmonconfig.xml
+
+    - name: Install Sysmon with config
+      win_command: C:\AdminTools\Sysmon\Sysmon64.exe -accepteula -i C:\AdminTools\Sysmon\sysmonconfig.xml
+      register: sysmon_install
+      failed_when: sysmon_install.rc not in [0, 1062, 1058, 1242]
+      changed_when: "'installed' in sysmon_install.stdout.lower()"
+
+    - name: Copy Wazuh Agent msi to host
+      win_copy:
+        src: files/agents/wazuh-agent.msi
+        dest: C:\AdminTools\wazuh-agent.msi
+
+    - name: Install Wazuh Agent
+      win_package:
+        path: C:\AdminTools\wazuh-agent.msi
+        arguments: /q WAZUH_MANAGER="{{ wazuh_manager_ip }}" WAZUH_REGISTRATION_SERVER="{{ wazuh_manager_ip }}"
+        state: present
+
+    - name: Configure Wazuh Agent
+      win_template:
+        src: templates/ossec.conf.j2
+        dest: "C:\\Program Files (x86)\\ossec-agent\\ossec.conf"
+      notify: Restart Wazuh Agent
+
+    - name: Cleanup experimental users from Standard VM
+      win_user:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - dev_user
+        - "standard_user.DESKTOP-ADTNA4H"
+      when: "'windows_standard' in group_names"
+
+    - name: Ensure standard_user exists
+      win_user:
+        name: standard_user
+        password: StandardUser123!
+        state: present
+        groups:
+          - Users
+      when: "'windows_standard' in group_names"
+
+    - name: Ensure dev_user exists
+      win_user:
+        name: dev_user
+        password: DevUser123!
+        state: present
+        groups:
+          - Administrators
+      when: "'windows_dev' in group_names"
+
+    # Configure the system to use the CASB Proxy
+    - name: Set System Proxy (WinINET)
+      win_shell: |
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value "{{ casb_gateway_ip }}:{{ casb_proxy_port }}"
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1
+
+    - name: Deploy Security Interceptor (Local Agent)
+      win_copy:
+        src: files/agents/casb-interceptor.exe
+        dest: C:\AdminTools\casb-interceptor.exe
+
+    - name: Configure VSCode Startup Hook
+      win_shell: |
+        $VscodePath = "C:\Program Files\Microsoft VS Code\Code.exe"
+        $WrapperPath = "C:\AdminTools\launch-vscode.ps1"
+        $Content = @"
+        Start-Process -FilePath 'C:\AdminTools\casb-interceptor.exe' -WindowStyle Hidden
+        Start-Process -FilePath '$VscodePath'
+        "@
+        Set-Content -Path $WrapperPath -Value $Content
+
+
+  handlers:
+    - name: Restart Wazuh Agent
+      win_service:
+        name: WazuhSvc
+        state: restarted

@@ -1,0 +1,19 @@
+<!-- 1. Wazuh Agent Configuration (ossec.conf) -->
+<!-- Add this to the <ossec_config> section of the Wazuh Agent running on the Splunk server -->
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/log/casb_risk_alerts.json</location>
+</localfile>
+
+<!-- 2. Wazuh Custom Rule (local_rules.xml) -->
+<!-- Add this to /var/ossec/etc/rules/local_rules.xml -->
+<group name="casb,security_violation,">
+  <rule id="100101" level="12">
+    <decoded_as>json</decoded_as>
+    <field name="risk_score" type="pcre2">^(\d{3,}|[89]\d)$</field> <!-- Alert if score >= 80 -->
+    <description>AI-CASB: High Risk User Detected - Consecutive Malicious Prompts</description>
+    <mitre>
+      <id>T1566</id> <!-- Phishing/Social Engineering -->
+    </mitre>
+  </rule>
+</group>

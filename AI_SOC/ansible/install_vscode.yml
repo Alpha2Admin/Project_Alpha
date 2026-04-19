@@ -1,0 +1,28 @@
+---
+- name: Install VS Code and Cline Offline
+  hosts: windows_dev
+  tasks:
+    - name: Ensure target directories exist
+      win_file:
+        path: C:\AdminTools
+        state: directory
+
+    - name: Copy VS Code Installer
+      win_copy:
+        src: files/agents/VSCodeSetup.exe
+        dest: C:\AdminTools\VSCodeSetup.exe
+
+    - name: Install VS Code
+      win_package:
+        path: C:\AdminTools\VSCodeSetup.exe
+        arguments: /verysilent /suppressmsgboxes /mergetasks=!runcode
+        state: present
+
+    - name: Copy Cline Extension
+      win_copy:
+        src: files/agents/cline.vsix
+        dest: C:\AdminTools\cline.vsix
+
+    - name: Install Cline Extension for dev_user
+      win_shell: |
+        & "C:\Program Files\Microsoft VS Code\bin\code.cmd" --install-extension C:\AdminTools\cline.vsix --extensions-dir "C:\Users\dev_user\.vscode\extensions" --user-data-dir "C:\Users\dev_user\AppData\Roaming\Code"

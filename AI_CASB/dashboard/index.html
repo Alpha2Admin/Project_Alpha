@@ -207,7 +207,7 @@ body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:
 </head>
 <body>
 <div class="error-banner" id="errorBanner">⚠️ Cannot connect to CASB Dashboard API at localhost:5001</div>
-<header class="header"><div class="header-content"><h1><span>🛡️</span>CASB Security Gateway</h1><p class="subtitle">DLP Policy Management Console — v3.0 Hybrid Engine</p><p class="last-updated" id="lastUpdated">Last Updated: —</p></div></header>
+<header class="header"><div class="header-content"><h1><span>🛡️</span>CASB Security Gateway</h1><p class="subtitle">AI-CASB v5.0 — Full-Spectrum Behavioral Detection Platform</p><p class="last-updated" id="lastUpdated">Last Updated: —</p></div></header>
 <main class="container">
 <section class="stats-row">
 <div class="stat-card"><div class="stat-label">Total Rules</div><div class="stat-value" id="statTotal">0</div></div>
@@ -221,6 +221,7 @@ body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:
   <button class="tab-btn active" id="tab-rules" onclick="switchTab('rules')">📋 DLP Rules</button>
   <button class="tab-btn" id="tab-blocklist" onclick="switchTab('blocklist')">🚫 Phrase Blocklist</button>
   <button class="tab-btn" id="tab-trainer" onclick="switchTab('trainer')">🧠 ML Trainer</button>
+  <button class="tab-btn" id="tab-compliance" onclick="switchTab('compliance')">📊 Compliance & SOAR</button>
 </nav>
 
 <!-- ═══════════════ TAB 1: DLP RULES ═══════════════ -->
@@ -311,6 +312,98 @@ body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:
   </div>
 </div>
 
+<!-- ═══════════════ TAB 4: COMPLIANCE & SOAR ═══════════════ -->
+<div class="tab-panel" id="panel-compliance">
+  <div class="blocklist-header" style="background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(168,85,247,.08));border-color:rgba(99,102,241,.2)">
+    <div class="bl-icon">📊</div>
+    <div>
+      <h3>Compliance & SOAR Command Center</h3>
+      <p>Executive-level view of AI usage risk posture, MITRE technique coverage, compliance framework alignment, and automated response actions.</p>
+    </div>
+  </div>
+
+  <!-- Risk Users Leaderboard -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+    <div style="background:var(--card);border:1px solid var(--cb);border-radius:12px;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--cb);display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-size:.95rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px">🎯 Top Risk Users</h3>
+        <span style="font-size:.72rem;color:var(--td);font-weight:500">LIVE DATA</span>
+      </div>
+      <div id="riskUsersList" style="padding:12px 16px;max-height:300px;overflow-y:auto">
+        <div class="empty-state" style="padding:20px"><div class="empty-icon" style="font-size:1.5rem">⏳</div><p style="font-size:.82rem">Loading risk data...</p></div>
+      </div>
+    </div>
+
+    <!-- SOAR Actions Panel -->
+    <div style="background:var(--card);border:1px solid var(--cb);border-radius:12px;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--cb)">
+        <h3 style="font-size:.95rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px">⚡ SOAR Response Actions</h3>
+      </div>
+      <div id="soarPanel" style="padding:16px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:8px">
+            <span style="font-size:1.2rem">⬇️</span>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#fff">Model Downgrade</div>
+              <div style="font-size:.75rem;color:var(--td)">Risk ≥ 11 → GPT-4 forced to GPT-3.5</div>
+            </div>
+            <span class="severity-badge severity-medium" style="margin-left:auto">ACTIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);border-radius:8px">
+            <span style="font-size:1.2rem">⏱️</span>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#fff">Rate Limiting</div>
+              <div style="font-size:.75rem;color:var(--td)">Risk ≥ 26 → 5 requests/min cap</div>
+            </div>
+            <span class="severity-badge severity-high" style="margin-left:auto">ACTIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px">
+            <span style="font-size:1.2rem">🔒</span>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#fff">Auto-Quarantine</div>
+              <div style="font-size:.75rem;color:var(--td)">Risk ≥ 50 → Full access revocation</div>
+            </div>
+            <span class="severity-badge severity-critical" style="margin-left:auto">ACTIVE</span>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px">
+          <div style="font-size:.78rem;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Quarantined Users</div>
+          <div id="quarantinedList" style="font-size:.85rem;color:var(--tm)">None</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compliance Scorecards -->
+  <div style="background:var(--card);border:1px solid var(--cb);border-radius:12px;overflow:hidden;margin-bottom:24px">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--cb)">
+      <h3 style="font-size:.95rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px">🏛️ Compliance Framework Alignment</h3>
+    </div>
+    <div id="scorecardsList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">
+    </div>
+  </div>
+
+  <!-- MITRE Coverage -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <!-- ATLAS -->
+    <div style="background:var(--card);border:1px solid var(--cb);border-radius:12px;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--cb);display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-size:.95rem;font-weight:700;color:#fff">🔬 MITRE ATLAS Coverage</h3>
+        <span id="atlasCoverage" style="font-size:.78rem;font-weight:700;color:var(--low)"></span>
+      </div>
+      <div id="atlasMatrix" style="padding:12px 16px"></div>
+    </div>
+    <!-- ATT&CK -->
+    <div style="background:var(--card);border:1px solid var(--cb);border-radius:12px;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--cb);display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-size:.95rem;font-weight:700;color:#fff">⚔️ MITRE ATT&CK Coverage</h3>
+        <span id="attackCoverage" style="font-size:.78rem;font-weight:700;color:var(--low)"></span>
+      </div>
+      <div id="attackMatrix" style="padding:12px 16px"></div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- Rule Modal -->
@@ -334,7 +427,7 @@ body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-const API='http://localhost:5001';
+const API='';
 let rules=[];
 let deleteTargetId=null;
 let trainingData=[];
@@ -627,7 +720,106 @@ document.getElementById('testSample').addEventListener('input',function(){
   testPattern();
 });
 
-document.addEventListener('DOMContentLoaded',fetchRules);
+document.addEventListener('DOMContentLoaded',()=>{fetchRules();fetchCompliance();});
+
+// ── v5.0 Compliance Tab ──────────────────────────────────────────────────────
+async function fetchCompliance(){
+  try{
+    const r=await fetch(API+'/api/compliance');
+    if(!r.ok) return;
+    const d=await r.json();
+    renderRiskUsers(d.risk_users||[]);
+    renderQuarantined(d.quarantined_users||[]);
+    renderScorecards(d.scorecards||[]);
+    renderMitreMatrix('atlasMatrix','atlasCoverage',d.mitre_atlas||[]);
+    renderMitreMatrix('attackMatrix','attackCoverage',d.mitre_attack||[]);
+  }catch(e){console.error('Compliance fetch error:',e);}
+}
+
+function renderRiskUsers(users){
+  const el=document.getElementById('riskUsersList');
+  if(!users.length){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--td);font-size:.85rem">No risk events recorded yet</div>';return;}
+  el.innerHTML=users.map((u,i)=>{
+    const emoji={'critical':'🔴','high':'🟠','elevated':'🟡','normal':'🟢'}[u.risk_level]||'⚪';
+    const barW=Math.min(100,u.risk_score*2);
+    const barColor={'critical':'var(--critical)','high':'var(--high)','elevated':'var(--medium)','normal':'var(--low)'}[u.risk_level]||'var(--td)';
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="font-size:.85rem;font-weight:700;color:var(--td);width:18px">#${i+1}</span>
+        <span style="font-size:1rem">${emoji}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.85rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(u.user_id)}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <div style="flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+              <div style="width:${barW}%;height:100%;background:${barColor};border-radius:2px;transition:width .5s"></div>
+            </div>
+            <span style="font-size:.72rem;color:var(--td);white-space:nowrap">${u.total_blocks||0}B ${u.total_flags||0}F</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.1rem;font-weight:800;color:${barColor}">${u.risk_score}</div>
+          <div style="font-size:.65rem;font-weight:600;color:var(--td);text-transform:uppercase">${u.risk_level}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderQuarantined(users){
+  const el=document.getElementById('quarantinedList');
+  if(!users.length){el.innerHTML='<span style="color:var(--low)">✅ No users quarantined</span>';return;}
+  el.innerHTML=users.map(u=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0">
+      <span style="color:var(--critical);font-weight:600">🔒 ${escapeHtml(u)}</span>
+      <button class="btn btn-green btn-sm" onclick="unblockUser('${escapeHtml(u)}')">Unblock</button>
+    </div>
+  `).join('');
+}
+
+async function unblockUser(userId){
+  try{
+    const r=await fetch(API+'/api/soar/unblock/'+userId,{method:'POST'});
+    const d=await r.json();
+    if(d.success) showToast('User '+userId+' unblocked','success');
+    else showToast('Failed to unblock','error');
+    fetchCompliance();
+  }catch(e){showToast('API error','error');}
+}
+
+function renderScorecards(cards){
+  const el=document.getElementById('scorecardsList');
+  el.innerHTML=cards.map(c=>{
+    const color=c.score>=90?'var(--low)':c.score>=80?'var(--medium)':c.score>=70?'var(--high)':'var(--critical)';
+    return `
+      <div style="padding:20px;border-right:1px solid var(--cb);text-align:center">
+        <div style="font-size:.75rem;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">${escapeHtml(c.framework)}</div>
+        <div style="position:relative;width:72px;height:72px;margin:0 auto 12px">
+          <svg viewBox="0 0 36 36" style="transform:rotate(-90deg)">
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="${c.score} ${100-c.score}" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;color:${color}">${c.score}%</div>
+        </div>
+        <div style="font-size:.72rem;color:var(--tm);line-height:1.4">${c.details.replace(/✅/g,'<span style="color:var(--low)">✅</span>').replace(/⚠️/g,'<span style="color:var(--medium)">⚠️</span>')}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderMitreMatrix(containerId,coverageId,techniques){
+  const el=document.getElementById(containerId);
+  const covered=techniques.filter(t=>t.covered).length;
+  const total=techniques.length;
+  document.getElementById(coverageId).textContent=`${covered}/${total} (${Math.round(covered/total*100)}%)`;
+  el.innerHTML=techniques.map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px;background:${t.covered?'rgba(34,197,94,.06)':'rgba(239,68,68,.04)'};border:1px solid ${t.covered?'rgba(34,197,94,.12)':'rgba(239,68,68,.1)'};border-radius:6px">
+      <span style="font-size:.85rem">${t.covered?'✅':'❌'}</span>
+      <div style="flex:1">
+        <span style="font-size:.78rem;font-weight:700;color:${t.covered?'var(--low)':'var(--critical)'}">${escapeHtml(t.id)}</span>
+        <span style="font-size:.78rem;color:var(--tm);margin-left:8px">${escapeHtml(t.name)}</span>
+      </div>
+      <span style="font-size:.68rem;color:var(--td)">${escapeHtml(t.layer)}</span>
+    </div>
+  `).join('');
+}
 </script>
 </body>
 </html>

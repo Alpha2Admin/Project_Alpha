@@ -1,0 +1,41 @@
+<Sysmon schemaversion="4.90">
+  <EventFiltering>
+    <!-- Event ID 22: DNS Query - Shadow AI Detection -->
+    <DnsQuery onmatch="include">
+      <QueryName condition="contains">openai.com</QueryName>
+      <QueryName condition="contains">chat.openai.com</QueryName>
+      <QueryName condition="contains">api.openai.com</QueryName>
+      <QueryName condition="contains">anthropic.com</QueryName>
+      <QueryName condition="contains">claude.ai</QueryName>
+      <QueryName condition="contains">bard.google.com</QueryName>
+      <QueryName condition="contains">gemini.google.com</QueryName>
+      <QueryName condition="contains">copilot.microsoft.com</QueryName>
+      <QueryName condition="contains">huggingface.co</QueryName>
+      <QueryName condition="contains">perplexity.ai</QueryName>
+      <QueryName condition="contains">poe.com</QueryName>
+      <QueryName condition="contains">character.ai</QueryName>
+      <QueryName condition="contains">deepseek.com</QueryName>
+      <QueryName condition="contains">groq.com</QueryName>
+      <QueryName condition="contains">together.ai</QueryName>
+      <QueryName condition="contains">replicate.com</QueryName>
+      <QueryName condition="contains">mistral.ai</QueryName>
+      <QueryName condition="contains">cohere.com</QueryName>
+      <QueryName condition="contains">useblackbox.io</QueryName>
+      <QueryName condition="contains">blackbox.ai</QueryName>
+    </DnsQuery>
+    <!-- Event ID 1: Process Create - track AI-related processes -->
+    <ProcessCreate onmatch="include">
+      <Image condition="contains">ollama</Image>
+      <Image condition="contains">lmstudio</Image>
+      <CommandLine condition="contains">openai</CommandLine>
+      <CommandLine condition="contains">anthropic</CommandLine>
+    </ProcessCreate>
+    <!-- Event ID 3: Network Connection - AI API endpoints -->
+    <NetworkConnect onmatch="include">
+      <DestinationHostname condition="contains">openai.com</DestinationHostname>
+      <DestinationHostname condition="contains">anthropic.com</DestinationHostname>
+      <DestinationHostname condition="contains">claude.ai</DestinationHostname>
+      <DestinationHostname condition="contains">gemini.google.com</DestinationHostname>
+    </NetworkConnect>
+  </EventFiltering>
+</Sysmon>

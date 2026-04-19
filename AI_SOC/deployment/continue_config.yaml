@@ -1,0 +1,13 @@
+models:
+  - name: OpenRouter Llama 3 (via AI-CASB)
+    provider: openai-compatible
+    model: openrouter/meta-llama/llama-3-8b-instruct:free
+    apiBase: http://<CASB_GATEWAY_IP>:4000/v1
+    apiKey: <YOUR_LITELLM_MASTER_KEY>
+
+tabAutocompleteModel:
+  name: OpenRouter Autocomplete
+  provider: openai-compatible
+  model: openrouter/meta-llama/llama-3-8b-instruct:free
+  apiBase: http://<CASB_GATEWAY_IP>:4000/v1
+  apiKey: <YOUR_LITELLM_MASTER_KEY>

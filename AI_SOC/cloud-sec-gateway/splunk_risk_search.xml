@@ -1,0 +1,33 @@
+<search>
+  <!--
+    AI-CASB Risk-Based Detection Search
+    Time window: 2 minutes (real-time sliding window)
+    Thresholds:  critical >= 1 (blocked) | high >= 3 | medium >= 5 | low >= 7
+    All non-critical events are flagged and allowed.
+  -->
+  <query>
+    index=casb_gateway (action=dlp_block OR action=dlp_flagged OR action=egress_block OR action=egress_monitor OR action=intrusion_detected OR action=wazuh_alert_fired)
+    | stats
+        count(eval(severity="critical")) as crit_count,
+        count(eval(severity="high"))     as high_count,
+        count(eval(severity="medium"))   as med_count,
+        count(eval(severity="low"))      as low_count,
+        latest(prompt_preview)           as last_prompt,
+        values(rule)                     as triggered_rules
+        by user
+    | eval risk_score = (crit_count * 100) + (high_count * 50) + (med_count * 25) + (low_count * 10)
+    | eval risk_status = case(
+        crit_count  >= 1, "CRITICAL_BREACH",
+        high_count  >= 3, "HIGH_BEHAVIORAL_RISK",
+        med_count   >= 5, "MEDIUM_BEHAVIORAL_RISK",
+        low_count   >= 7, "LOW_BEHAVIORAL_RISK",
+        1=1,              "NOMINAL"
+    )
+    | where risk_status != "NOMINAL"
+    | table user, risk_status, risk_score, crit_count, high_count, med_count, low_count, triggered_rules, last_prompt
+    | sort - risk_score
+  </query>
+  <earliest>-2m</earliest>
+  <latest>now</latest>
+  <sampleRatio>1</sampleRatio>
+</search>

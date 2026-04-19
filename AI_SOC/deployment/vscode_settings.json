@@ -1,0 +1,7 @@
+{
+    "http.proxyStrictSSL": false,
+    "cline.apiProvider": "openai-compatible",
+    "cline.openAiCompatible.apiBase": "http://<CASB_GATEWAY_IP>:4000/v1",
+    "cline.openAiCompatible.apiKey": "<YOUR_LITELLM_MASTER_KEY>",
+    "cline.openAiCompatible.modelId": "openrouter/openrouter/free"
+}
