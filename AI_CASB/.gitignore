@@ -26,3 +26,4 @@ Thumbs.db
 
 # ── Splunk (local testing artifacts) ─
 *.csv
+\n# Local Credentials\nPORTAINER_CREDS.txt
