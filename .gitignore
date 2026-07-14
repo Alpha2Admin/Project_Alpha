@@ -1,0 +1,28 @@
+# IDE
+.idea/
+*.iml
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Secrets
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
